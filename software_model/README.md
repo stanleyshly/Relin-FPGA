@@ -1,10 +1,12 @@
 # Relinearization arithmetic reference
 
-This standalone, standard-library Python model replaces the unavailable software
-model for arithmetic experiments. It implements negacyclic NTT/INTT, RNS digit
-lifting, two evaluation-key multiply/accumulate paths, centered division by the
-special prime, and addition to the original ciphertext components. The default
-N=4096, L=2, 60-bit primes match `src/hbm/kernel_top.v` and the RTL modulus tables.
+This in-repository model replaces the removed external `model` submodule. It
+has no third-party Python dependencies and is invoked from the repository root.
+
+It implements negacyclic NTT/INTT, RNS digit lifting, two evaluation-key
+multiply/accumulate paths, centered division by the special prime, and addition
+to the original ciphertext components. The default N=4096, L=2, 60-bit primes
+match `src/hbm/kernel_top.v` and the RTL modulus tables.
 
 ```bash
 python3 -m unittest discover -s software_model -v

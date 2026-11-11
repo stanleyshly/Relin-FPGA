@@ -1,10 +1,6 @@
 [submodule "src/ntt"]
 	path = src/ntt
 	url = https://github.com/cisec-su/TP-NTT.git
-[submodule "model"]
-	path = model
-	url = https://github.com/cisec-su/FHE-py.git
-	branch = relin_fpga_test
 [submodule "TP-NTT"]
 	path = TP-NTT
 	url = https://github.com/cisec-su/TP-NTT.git

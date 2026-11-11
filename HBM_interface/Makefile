@@ -4,10 +4,20 @@ RMDIR = rm -rf
 CP = cp -rf
 LN = ln -sf
 ECHO := @echo
+DEVICE = $(if $(filter V80 v80,$(device)),V80,$(if $(filter U280 u280,$(device)),U280,$(if $(device),$(device),U280)))
+ifeq ($(DEVICE),V80)
+XILINX_ROOT ?= /opt/xilinx-full/2025.1
+XILINX_VIVADO ?= $(XILINX_ROOT)/Vivado
+XILINX_VITIS ?= $(XILINX_ROOT)/Vitis
+XILINX_HLS ?= $(XILINX_ROOT)/Vitis
+else ifeq ($(DEVICE),U280)
 XILINX_ROOT ?= /opt/xilinx/Xilinx_Vivado_Vitis_2022.1
 XILINX_VIVADO ?= $(XILINX_ROOT)/Vivado/2022.1
 XILINX_VITIS ?= $(XILINX_ROOT)/Vitis/2022.1
 XILINX_HLS ?= $(XILINX_ROOT)/Vitis_HLS/2022.1
+else
+$(error Unsupported device '$(DEVICE)'; use device=U280 or device=V80)
+endif
 XILINX_XRT ?= /opt/xilinx/xrt
 PLATFORM_REPO_PATHS ?= /opt/xilinx/platforms
 export XILINX_VIVADO XILINX_VITIS XILINX_HLS XILINX_XRT PLATFORM_REPO_PATHS
@@ -22,6 +32,21 @@ VPP ?= $(XILINX_VITIS)/bin/v++
 VIVADO ?= $(XILINX_VIVADO)/bin/vivado
 EMCONFIGUTIL ?= $(XILINX_VITIS)/bin/emconfigutil
 PLATFORMINFO ?= $(XILINX_VITIS)/bin/platforminfo
+
+AVED_ROOT ?= /data/yd383/AMD-AVED/AVED
+AVED_HW_VERSION ?= amd_v80_gen5x8_25.1
+AVED_DESIGN_BUILDER_ROOT ?= /data/yd383/bfly-dse/g2_p4/bfly-xcel/aved-design-builder
+AVED_PYTHON_VENV ?= $(abspath ../.venv)
+PYTHON ?= $(if $(VIRTUAL_ENV),$(VIRTUAL_ENV)/bin/python,$(AVED_PYTHON_VENV)/bin/python)
+V80_BUILD_DIR = $(BUILD_DIR)/aved
+V80_IP_DIR = $(TMP_DIR)/kernel
+V80_SLR ?= SLR2
+export AVED_ROOT AVED_HW_VERSION AVED_DESIGN_BUILDER_ROOT
+
+.PHONY: aved-python
+aved-python:
+	@if [ ! -x "$(PYTHON)" ]; then python3 -m venv "$(AVED_PYTHON_VENV)"; fi
+	@if ! "$(PYTHON)" -c 'import pydantic' >/dev/null 2>&1; then "$(PYTHON)" -m pip install 'pydantic>=2.0'; fi
 
 ################################################################################
 # Help Section
@@ -107,6 +132,17 @@ endif
 CONTAINERS := $(foreach P, $(basename $(PACKAGES)), C$P)
 
 .PHONY: build
+ifeq ($(DEVICE),V80)
+ifneq ($(TARGET),hw)
+build:
+	@echo "The V80 AVED flow builds hardware images only; use TARGET=hw" >&2
+	@exit 2
+else
+build: aved-python $(RTL_KERNELS)
+	$(PYTHON) ../scripts/build_v80_aved.py --ip-dir $(V80_IP_DIR) --output-dir $(V80_BUILD_DIR) --slr $(V80_SLR)
+	cd $(V80_BUILD_DIR) && $(XILINX_ENV) ./build_all.sh
+endif
+else
 build: $(CONTAINERS)
 
 # Real output targets preserve completed links and rebuild when inputs change.
@@ -119,6 +155,13 @@ $(BUILD_DIR)/%.xclbin: $(KERNELS) $(PKGDIR)/%.cfg $(HW_LINK_INPUTS)
 .PHONY: build-status
 build-status:
 	python3 ../scripts/build_status.py $(TMP_DIR)/link/vivado/vpl/prj/prj.runs
+endif
+
+ifeq ($(DEVICE),V80)
+.PHONY: build-status
+build-status:
+	python3 ../scripts/build_status.py $(V80_BUILD_DIR)/hw/build/prj.runs
+endif
 
 ################################################################################
 # Setting Rules for Host Executables (Compiling binary files)
@@ -126,12 +169,19 @@ build-status:
 HOSTS := $(foreach P, $(basename $(PACKAGES)), H$P)
 
 .PHONY: host
+ifeq ($(DEVICE),V80)
+host:
+	@echo "The V80 AVED host runtime is not ported; the existing host uses U280 XRT" >&2
+	@exit 2
+else
 host: $(HOSTS)
 
 $(HOSTS): H%: $(RUN_DIR)/%
 
 $(RUN_DIR)/%: $(HOST_DIR)/%.cpp $(HOST_INCS) $(shell find $(HOST_DIR)/includes -type f)
 	$(CXX) -o $@ $< $(HOST_INCS) $(CXXFLAGS) $(LDFLAGS)
+
+endif
 	
 ################################################################################
 # Setting Essential Checks and Running Rules
@@ -143,6 +193,16 @@ EMCONFIG := $(EM_DIR)/emconfig.json
 # 	cd $(RUN_DIR) && XCL_EMULATION_MODE=$(TARGET) ./$(PACKAGES) --xclbin $(PACKAGES)
 
 .PHONY: run_prepare
+ifeq ($(DEVICE),V80)
+run_prepare:
+	@echo "V80 AVED deployment does not use XRT emconfig or .xclbin run preparation" >&2
+	@exit 2
+
+.PHONY: run
+run:
+	@echo "The V80 AVED host runtime is not ported; this run target uses U280 XRT" >&2
+	@exit 2
+else
 run_prepare: $(EMCONFIG)
 ifneq (1, $(words $(PACKAGES)))
 	$(ECHO) 'The PACKAGES variable is: $(PACKAGES)'
@@ -167,6 +227,7 @@ endif
 	
 $(EMCONFIG):
 	$(XILINX_ENV) $(EMCONFIGUTIL) --platform $(PLATFORM) --od $(EM_DIR)
+endif
 
 ################################################################################
 # Setting Rules for Simulating a Kernel
@@ -204,7 +265,19 @@ vitis_analyzer:
 
 .PHONY: open_vivado_project
 open_vivado_project:
+ifeq ($(DEVICE),V80)
+	$(VIVADO) $(abspath ../vivado_2025/relin.xpr)
+
+else
 	$(VIVADO) $(TMP_DIR)/link/vivado/vpl/prj/prj.xpr
+endif
+
+.PHONY: create_project check_project
+create_project:
+	$(VIVADO) -mode batch -source ../scripts/create_project.tcl -tclargs $(DEVICE)
+
+check_project:
+	$(VIVADO) -mode batch -source ../scripts/check_project.tcl -tclargs $(DEVICE)
 
 ################################################################################
 # Cleaning Rules

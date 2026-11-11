@@ -17,7 +17,7 @@ git clone <repository-url> Relin-FPGA
 cd Relin-FPGA
 ```
 
-Initialize and update the Git submodules:
+Initialize and update the RTL submodules:
 
 ```bash
 git submodule update --init --recursive
@@ -32,38 +32,22 @@ cd Relin-FPGA
 
 ---
 
-## 2. Generate Relinearization Test Vectors
+## 2. Generate Relinearization Reference Vectors
 
-The original `model` submodule is currently unavailable from its configured remote.
-A standalone arithmetic replacement is provided in [software_model](software_model/README.md).
-Run `python3 software_model/relin.py` to generate reference vectors and
-`python3 -m unittest discover -s software_model -v` to validate it.
-Its vectors still require TP-NTT/HBM layout conversion before hardware use.
-The following instructions describe the original model when accessible.
-
-First, go to the BFV model directory:
+The former `model` submodule has been removed. The maintained replacement is
+[software_model](software_model/README.md), a standalone Python arithmetic
+reference that generates deterministic test fixtures:
 
 ```bash
-cd model/BFV
+python3 software_model/relin.py
 ```
 
-Open `test.py` and update the following variables according to the desired parameter set:
-
-```python
-ring_dimension
-LOGQ
-L
-```
-
-These parameters are used to generate the relinearization test vectors.
-
-Here, `ring_dimension` defines the polynomial ring size, `LOGQ` defines the bit-size of each RNS prime, and `L` defines the number of RNS primes in the BFV modulus `Q`.
-
-After running the script, the generated test vectors should appear in:
-
-```bash
-model/BFV/test_vectors
-```
+By default it uses `N=4096`, `L=2`, and writes to
+`software_model/test_vectors/`. Set `--n`, `--moduli` (the Q primes followed by
+special prime p), `--seed`, and `--output` to choose another fixture. The model
+is an arithmetic oracle; its vectors do not yet include the TP-NTT twiddle,
+Montgomery, and HBM layout conversions required by the hardware host.
+`software_model/README.md` documents that boundary and the supported arithmetic.
 
 ---
 
@@ -92,7 +76,8 @@ LOGQ = 60  -> LOGQH = 17
 LOGQ = 32  -> LOGQH = 15
 ```
 
-Make sure that the RTL simulation parameters match the test-vector parameters generated in `model/BFV/test.py`.
+Make sure the RTL simulation parameters match the selected parameters for the
+software reference.
 
 ---
 
@@ -114,9 +99,23 @@ or check that every source exists and all IP is unlocked, run from the repositor
 /opt/xilinx/Xilinx_Vivado_Vitis_2022.1/Vivado/2022.1/bin/vivado -mode batch -source scripts/check_project.tcl
 ```
 
+The 2025.1 project is kept beside it in `vivado_2025/`. Create, check, or open
+the V80 project through the same Makefile with:
+
+```bash
+make create_project device=v80
+make check_project device=v80
+make open_vivado_project device=v80
+```
+
+Project creation uses `xcv80-lsva4737-2MHP-e-S` and recreates the AXI VIP for
+the V80 project in Vivado 2025.1. The U280-only FIFO Generator IPs are not
+instantiated by this project RTL and are omitted from the V80 project because
+that IP is unsupported for the V80 part. Keep the U280 project and its Vivado
+2022.1 IP in `vivado_2022/`.
+
 The open check does not run simulation. A hardware correctness run still needs
-the original model vectors or validated TP-NTT/HBM layout conversion of the
-replacement model vectors.
+validated TP-NTT/HBM layout conversion of the replacement model vectors.
 
 Then click:
 
@@ -145,26 +144,52 @@ cd HBM_interface
 source source_me
 ```
 
-The build defaults to Vivado and Vitis 2022.1 under
-`/opt/xilinx/Xilinx_Vivado_Vitis_2022.1`, XRT under `/opt/xilinx/xrt`, and
-platforms under `/opt/xilinx/platforms`. Override `XILINX_ROOT`, `XILINX_XRT`,
-or `PLATFORM_REPO_PATHS` for another installation. Individual make tool paths
-can be overridden with `VIVADO=...` and `VPP=...`. Temporary compiler files
-default to the build directory; `TMPDIR` can override this.
-
-Copy the generated test vectors from:
+This defaults to U280. For V80, select its environment before sourcing:
 
 ```bash
-model/BFV/test_vectors
+export DEVICE=V80
+source source_me
 ```
 
-to:
+The Makefile selector is lowercase (`device=v80` or `device=u280`); `DEVICE`
+selects the environment for `source_me`.
 
-```bash
-HBM_interface/scripts/kernel
-```
+The default device is U280 and uses Vivado/Vitis 2022.1 under
+`/opt/xilinx/Xilinx_Vivado_Vitis_2022.1`. Select V80 with `device=v80`; it uses
+Vivado 2025.1 under `/opt/xilinx-full/2025.1` and the V80 part above. U280 is
+selected with `device=u280`. Both selectors work from the repository root and
+`HBM_interface/`.
 
-These files are used as the input test vectors for the host-side hardware test.
+For a U280 build, the Makefile keeps the Vitis/XRT `.xclbin` flow. For V80,
+`make build TARGET=hw device=v80` packages the RTL kernel with Vivado 2025.1,
+generates the AVED design around it, and runs AVED's `build_all.sh` to produce
+the PDI. The AVED sources and design builder default to the installed copies
+under `/data/yd383`; override `AVED_ROOT`, `AVED_HW_VERSION`, or
+`AVED_DESIGN_BUILDER_ROOT` if those move. The generated design connects the
+kernel's 32 AXI master ports to AVED's 32 HBM interfaces and places it in
+`SLR2` by default (`V80_SLR` can select another SLR).
+
+The V80 AVED hardware image flow uses Python to generate the AVED project. By
+default, it creates `.venv/` in the repository root on the first V80 build and
+installs `pydantic>=2.0` there if needed. Set `AVED_PYTHON_VENV` to choose a
+different environment; an active `$VIRTUAL_ENV` takes precedence. You can also
+run `make aved-python device=v80` to prepare the environment explicitly. The
+existing `host`, `run_prepare`, and `run` targets still use U280 XRT and report
+that V80 AVED host deployment is not ported. The V80 project setup, project
+check, and RTL simulation use Vivado 2025.1. This host has the AVED deployment
+package and `static.xsa` at
+`/opt/amd/aved/amd_v80_gen5x8_25.1_exdes_1_xbtest/`; that XSA is an AVED
+firmware input, not an XRT acceleration platform.
+
+XRT defaults to `/opt/xilinx/xrt` and U280 platform repositories to
+`/opt/xilinx/platforms`; override `XILINX_ROOT`, `XILINX_XRT`,
+`PLATFORM_REPO_PATHS`, or `PLATFORM` for a different installation. Individual
+tool paths can be overridden with `VIVADO=...` and `VPP=...`. Temporary
+compiler files default to the build directory; `TMPDIR` can override this.
+
+The standalone model's output is not a drop-in input for the host-side hardware
+test. Hardware testing still requires a TP-NTT/HBM vector-layout conversion
+before placing vectors under `HBM_interface/scripts/kernel/test_vectors/`.
 
 ---
 
@@ -175,10 +200,10 @@ Hardware emulation can be built and run with `TARGET=hw_emu`.
 This may take around 30 minutes.
 
 ```bash
-make build TARGET=hw_emu
-make run_prepare TARGET=hw_emu
-make host TARGET=hw_emu
-make run TARGET=hw_emu
+make build TARGET=hw_emu device=u280
+make run_prepare TARGET=hw_emu device=u280
+make host TARGET=hw_emu device=u280
+make run TARGET=hw_emu device=u280
 ```
 
 This runs the design in hardware emulation mode for the Alveo U280 platform.
@@ -294,7 +319,7 @@ The script automatically creates test logs in:
 run.txt
 ```
 
-It also compares the original reference results:
+It also compares the reference results:
 
 ```bash
 test_vectors/relin_ct*

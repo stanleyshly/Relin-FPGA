@@ -17,7 +17,12 @@ foreach line ${source_list} {
 }
 add_files -norecurse $source_files
 
-source -notrace "${kernel_dir}/ip.tcl"
+if {[string match -nocase "xcv80-*" $part]} {
+  add_files -norecurse "${kernel_dir}/fifo_sync_v80.sv"
+  source -notrace "${kernel_dir}/ip_v80.tcl"
+} else {
+  source -notrace "${kernel_dir}/ip.tcl"
+}
 
 ################################################################################
 

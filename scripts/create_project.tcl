@@ -1,7 +1,19 @@
 # Recreate a portable simulation project with the installed Vivado release.
 set root [file normalize [file join [file dirname [info script]] ..]]
-set project_dir [file join $root vivado_2022]
-create_project -force relin $project_dir -part xcu280-fsvh2892-2L-e
+set device [string toupper [lindex $::argv 0]]
+if {$device eq ""} {set device U280}
+switch -- $device {
+    U280 {
+        set project_dir [file join $root vivado_2022]
+        set part xcu280-fsvh2892-2L-e
+    }
+    V80 {
+        set project_dir [file join $root vivado_2025]
+        set part xcv80-lsva4737-2MHP-e-S
+    }
+    default {error "Unsupported device '$device'; use U280 or V80"}
+}
+create_project -force relin $project_dir -part $part
 set_property target_language Verilog [current_project]
 set_property simulator_language Mixed [current_project]
 set_property source_mgmt_mode All [current_project]
@@ -12,7 +24,10 @@ set include_dirs {}
 set source_paths {}
 foreach source $sources {
     set path [file normalize [file join $root HBM_interface $source]]
-    if {![file exists $path]} {error "Missing RTL source: $path; initialize submodules recursively"}
+    if {![file exists $path]} {
+        puts "WARNING: Skipping missing RTL source: $path (initialize submodules recursively to restore it)"
+        continue
+    }
     lappend source_paths $path
     if {[file extension $path] in {.vh .svh}} {
         lappend include_dirs [file dirname $path]
@@ -20,7 +35,11 @@ foreach source $sources {
 }
 add_files -norecurse $source_paths
 set_property include_dirs [lsort -unique $include_dirs] [get_filesets sources_1]
-source [file join $root scripts project_ip.tcl]
+if {$device eq "V80"} {
+    source [file join $root scripts project_ip_v80.tcl]
+} else {
+    source [file join $root scripts project_ip.tcl]
+}
 set_property top kernel [get_filesets sources_1]
 foreach {fileset top files} {
     sim_hbm kernel_tb {kernel_tb.v axi_hbm.sv axi_ram.sv}

@@ -1,4 +1,19 @@
-export XILINX_ROOT="${XILINX_ROOT:-/opt/xilinx/Xilinx_Vivado_Vitis_2022.1}"
-source "$XILINX_ROOT/Vitis/2022.1/settings64.sh" || return
+DEVICE_NORMALIZED="${DEVICE:-U280}"
+DEVICE_NORMALIZED="${DEVICE_NORMALIZED,,}"
+case "$DEVICE_NORMALIZED" in
+  v80)
+    export XILINX_ROOT="${XILINX_ROOT:-/opt/xilinx-full/2025.1}"
+    VITIS_SETTINGS="$XILINX_ROOT/Vitis/settings64.sh"
+    ;;
+  u280)
+    export XILINX_ROOT="${XILINX_ROOT:-/opt/xilinx/Xilinx_Vivado_Vitis_2022.1}"
+    VITIS_SETTINGS="$XILINX_ROOT/Vitis/2022.1/settings64.sh"
+    ;;
+  *)
+    echo "Unsupported DEVICE '${DEVICE}'; use U280 or V80" >&2
+    return 1
+    ;;
+esac
+source "$VITIS_SETTINGS" || return
 source "${XILINX_XRT:-/opt/xilinx/xrt}/setup.sh" || return
 export PLATFORM_REPO_PATHS="${PLATFORM_REPO_PATHS:-/opt/xilinx/platforms}"

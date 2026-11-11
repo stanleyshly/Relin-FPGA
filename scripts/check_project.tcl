@@ -1,5 +1,11 @@
 set root [file normalize [file join [file dirname [info script]] ..]]
-set project [file join $root vivado_2022 relin.xpr]
+set device [string toupper [lindex $::argv 0]]
+if {$device eq ""} {set device U280}
+switch -- $device {
+    U280 {set project [file join $root vivado_2022 relin.xpr]}
+    V80 {set project [file join $root vivado_2025 relin.xpr]}
+    default {error "Unsupported device '$device'; use U280 or V80"}
+}
 if {[catch {
     open_project $project
     set missing {}
