@@ -4,8 +4,24 @@ RMDIR = rm -rf
 CP = cp -rf
 LN = ln -sf
 ECHO := @echo
-VPP := /home/cisec/Xilinx/Vitis/2023.2/bin/v++
-VIVADO := /home/cisec/Xilinx/Vivado/2023.2/bin/vivado
+XILINX_ROOT ?= /opt/xilinx/Xilinx_Vivado_Vitis_2022.1
+XILINX_VIVADO ?= $(XILINX_ROOT)/Vivado/2022.1
+XILINX_VITIS ?= $(XILINX_ROOT)/Vitis/2022.1
+XILINX_HLS ?= $(XILINX_ROOT)/Vitis_HLS/2022.1
+XILINX_XRT ?= /opt/xilinx/xrt
+PLATFORM_REPO_PATHS ?= /opt/xilinx/platforms
+export XILINX_VIVADO XILINX_VITIS XILINX_HLS XILINX_XRT PLATFORM_REPO_PATHS
+
+# Initialize the matching Xilinx tools in each recipe shell. v++ launches
+# vitis_hls and Vivado internally, so their settings must be in its environment.
+SHELL := /bin/bash
+.SHELLFLAGS := -c
+XILINX_ENV = source "$(XILINX_VIVADO)/settings64.sh" && source "$(XILINX_VITIS)/settings64.sh" && source "$(XILINX_HLS)/settings64.sh" &&
+
+VPP ?= $(XILINX_VITIS)/bin/v++
+VIVADO ?= $(XILINX_VIVADO)/bin/vivado
+EMCONFIGUTIL ?= $(XILINX_VITIS)/bin/emconfigutil
+PLATFORMINFO ?= $(XILINX_VITIS)/bin/platforminfo
 
 ################################################################################
 # Help Section
@@ -38,10 +54,15 @@ help::
 
 include config.mk
 
-DUMMY := $(shell mkdir -p build)
+# Keep compiler and linker temporary files on the workspace filesystem.
+TMPDIR ?= $(abspath $(TMP_DIR))
+export TMPDIR
+
+DUMMY := $(shell mkdir -p $(BUILD_ROOT))
 DUMMY := $(shell mkdir -p run)
 DUMMY := $(shell mkdir -p $(RUN_DIR))
 DUMMY := $(shell mkdir -p $(TMP_DIR))
+DUMMY := $(shell mkdir -p $(TMPDIR))
 DUMMY := $(shell mkdir -p $(LOG_DIR))
 DUMMY := $(shell mkdir -p $(REP_DIR))
 
@@ -74,16 +95,31 @@ endif
 ################################################################################
 # Setting Rules for Containers (Compiling xclbin files)
 
+# Functional netlist exports are unnecessary for physical hardware builds.
+# Keep the normal Vivado flow for RTL simulation and hardware emulation.
+ifeq ($(TARGET),hw)
+HW_LINK_INPUTS := ../scripts/hw_synth_no_sim_netlists.tcl
+VPP_FLAGS += --vivado.prop run.ulp_kernel_1_0_synth_1.STEPS.SYNTH_DESIGN.TCL.PRE=$(abspath $(HW_LINK_INPUTS))
+# Emit per-instance resource totals after routing, alongside the full-device reports.
+VPP_FLAGS += --vivado.prop run.impl_1.STEPS.ROUTE_DESIGN.TCL.POST=$(abspath ../scripts/report_hierarchical_utilization.tcl)
+endif
+
 CONTAINERS := $(foreach P, $(basename $(PACKAGES)), C$P)
 
 .PHONY: build
 build: $(CONTAINERS)
 
-$(CONTAINERS) : $(KERNELS)
-	$(eval PNAME := $$$(@))
+# Real output targets preserve completed links and rebuild when inputs change.
+$(CONTAINERS): C%: $(BUILD_DIR)/%.xclbin
+
+$(BUILD_DIR)/%.xclbin: $(KERNELS) $(PKGDIR)/%.cfg $(HW_LINK_INPUTS)
 	mkdir -p $(BUILD_DIR)
-	$(VPP) $(VPP_FLAGS) --config $(PKGDIR)/$(PNAME).cfg --link $(VPP_LDFLAGS) -o $(BUILD_DIR)/$(PNAME).xclbin $^
-	
+	$(XILINX_ENV) $(VPP) $(VPP_FLAGS) --config $(PKGDIR)/$*.cfg --link $(VPP_LDFLAGS) -o $@ $(KERNELS)
+
+.PHONY: build-status
+build-status:
+	python3 ../scripts/build_status.py $(TMP_DIR)/link/vivado/vpl/prj/prj.runs
+
 ################################################################################
 # Setting Rules for Host Executables (Compiling binary files)
 
@@ -92,9 +128,10 @@ HOSTS := $(foreach P, $(basename $(PACKAGES)), H$P)
 .PHONY: host
 host: $(HOSTS)
 
-$(HOSTS):
-	$(eval PNAME := $$$(@))
-	$(CXX) -o $(RUN_DIR)/$(PNAME) $(HOST_DIR)/$(PNAME).cpp $(HOST_INCS) $(CXXFLAGS) $(LDFLAGS)
+$(HOSTS): H%: $(RUN_DIR)/%
+
+$(RUN_DIR)/%: $(HOST_DIR)/%.cpp $(HOST_INCS) $(shell find $(HOST_DIR)/includes -type f)
+	$(CXX) -o $@ $< $(HOST_INCS) $(CXXFLAGS) $(LDFLAGS)
 	
 ################################################################################
 # Setting Essential Checks and Running Rules
@@ -129,7 +166,7 @@ else
 endif	
 	
 $(EMCONFIG):
-	emconfigutil --platform $(PLATFORM) --od $(EM_DIR)
+	$(XILINX_ENV) $(EMCONFIGUTIL) --platform $(PLATFORM) --od $(EM_DIR)
 
 ################################################################################
 # Setting Rules for Simulating a Kernel
@@ -159,7 +196,7 @@ pack: run_prepare
 platforminfo: $(PLATFORM).pinfo
 
 $(PLATFORM).pinfo:
-	platforminfo --force --platform $(PLATFORM) -o $@
+	$(PLATFORMINFO) --force --platform $(PLATFORM) -o $@
 
 .PHONY: vitis_analyzer
 vitis_analyzer: 
@@ -167,7 +204,7 @@ vitis_analyzer:
 
 .PHONY: open_vivado_project
 open_vivado_project:
-	vivado $(TMP_DIR)/link/vivado/vpl/prj/prj.xpr
+	$(VIVADO) $(TMP_DIR)/link/vivado/vpl/prj/prj.xpr
 
 ################################################################################
 # Cleaning Rules
@@ -175,18 +212,7 @@ open_vivado_project:
 .PHONY: clean
 clean:
 	-$(RM) *.jou *.log *.str
-
-.PHONY: cleanrun
-cleanrun: clean
-	-$(RMDIR) run/*
-
-.PHONY: cleanbuild
-cleanbuild: cleanrun
-	-$(RMDIR) build/*
-
-.PHONY: cleanall
-cleanall: cleanrun cleanbuild
-	-$(RMDIR) .Xil .run .ipcache
+	-$(RMDIR) run $(BUILD_ROOT) .Xil .run .ipcache .cache *.cache *.gen *.runs *.sim *.ip_user_files *.hw *.sdk *.data
 	-$(RMDIR) _$(PACK) $(PACK)
 	
 .PHONY: kill
@@ -203,10 +229,10 @@ DCP_BIT_DIR := $(TMP_DIR)/link/vivado/vpl/prj/prj.runs/impl_$(STRAT)
 .PHONY: continue-dcp
 continue-dcp: $(DCP_BIT_DIR)/$(DCP) 
 	mkdir -p $(BUILD_DIR)/continue
-	$(VPP) $(VPP_FLAGS) --link $(VPP_LDFLAGS) --reuse_impl $< -o $(BINARY_CONTAINER) $(KERNELS)
+	$(XILINX_ENV) $(VPP) $(VPP_FLAGS) --link $(VPP_LDFLAGS) --reuse_impl $< --config $(PKGDIR)/kernel.cfg -o $(BUILD_DIR)/continue/kernel.xclbin $(KERNELS)
 
 .PHONY: continue-bit
 continue-bit: $(DCP_BIT_DIR)/$(BIT) 
 	mkdir -p $(BUILD_DIR)/continue
-	$(VPP) $(VPP_FLAGS) --link $(VPP_LDFLAGS) --reuse_bit $< -o $(BINARY_CONTAINER) $(KERNELS)
+	$(XILINX_ENV) $(VPP) $(VPP_FLAGS) --link $(VPP_LDFLAGS) --reuse_bit $< --config $(PKGDIR)/kernel.cfg -o $(BUILD_DIR)/continue/kernel.xclbin $(KERNELS)
 

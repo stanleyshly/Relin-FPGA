@@ -19,8 +19,9 @@ CXXFLAGS  += -Isrc/hls
 CXXFLAGS  += -Wno-int-in-bool-context
 LDFLAGS   += 
 
-EM_DIR    := ./build/$(PLATFORM)/emconfig
-BUILD_DIR := ./build/$(PLATFORM)/$(TARGET)
+BUILD_ROOT ?= $(abspath ../build)
+EM_DIR    := $(BUILD_ROOT)/$(PLATFORM)/emconfig
+BUILD_DIR := $(BUILD_ROOT)/$(PLATFORM)/$(TARGET)
 RUN_DIR   := ./run/$(PLATFORM)/$(TARGET)
 
 TMP_DIR   := $(BUILD_DIR)/tmp
@@ -41,7 +42,9 @@ $(HLS_KERNELS) : $(BUILD_DIR)/%.xo : src/hls/%.cpp
 
 ## rtl
 RTL_KERNELS := $(patsubst %, $(BUILD_DIR)/%, $(RTL_KERNELS))
-$(RTL_KERNELS) : $(BUILD_DIR)/%.xo : 
+RTL_INPUTS := $(shell cat src/rtl/kernel/sources)
+$(RTL_KERNELS) : $(BUILD_DIR)/%.xo : $(RTL_INPUTS) $(wildcard src/rtl/kernel/*.tcl) src/rtl/kernel/sources src/rtl/kernel/kernel.xml $(PACKAGE_SCRIPT)
+
 	$(VIVADO) -mode batch -source $(PACKAGE_SCRIPT) -nojournal -log $(LOG_DIR)/vivado_$*.log -tclargs $* $(TARGET) $(PART) $(BUILD_DIR) $(TMP_DIR)
 
 ## sim

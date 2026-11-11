@@ -129,7 +129,7 @@ wire [LOGQ-1:0] fn_o_poly   [TP-1:0];
 // wire acc_write_done;
 wire acc_start_read;
 
-wire i_p1_valid_d1, i_p2_valid_d1;
+
 
 
 wire o_valid;

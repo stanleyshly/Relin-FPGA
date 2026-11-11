@@ -22,7 +22,9 @@ source -notrace "${kernel_dir}/ip.tcl"
 ################################################################################
 
 # source -notrace "${kernel_dir}/bd.tcl"
-source -notrace "${kernel_dir}/tb.tcl"
+if {$for_sim == yes} {
+  source -notrace "${kernel_dir}/tb.tcl"
+}
 
 ################################################################################
 

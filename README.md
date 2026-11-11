@@ -34,6 +34,13 @@ cd Relin-FPGA
 
 ## 2. Generate Relinearization Test Vectors
 
+The original `model` submodule is currently unavailable from its configured remote.
+A standalone arithmetic replacement is provided in [software_model](software_model/README.md).
+Run `python3 software_model/relin.py` to generate reference vectors and
+`python3 -m unittest discover -s software_model -v` to validate it.
+Its vectors still require TP-NTT/HBM layout conversion before hardware use.
+The following instructions describe the original model when accessible.
+
 First, go to the BFV model directory:
 
 ```bash
@@ -91,13 +98,25 @@ Make sure that the RTL simulation parameters match the test-vector parameters ge
 
 ## 4. Run RTL Simulation in Vivado
 
-Open the Vivado 2023 project:
+Open the Vivado 2022.1 project:
 
 ```bash
-vivado_2023/relin.xpr
+vivado_2022/relin.xpr
 ```
 
 You can open this file directly from Vivado.
+
+The project and its IP were recreated using Vivado 2022.1. To recreate the project
+or check that every source exists and all IP is unlocked, run from the repository root:
+
+```bash
+/opt/xilinx/Xilinx_Vivado_Vitis_2022.1/Vivado/2022.1/bin/vivado -mode batch -source scripts/create_project.tcl
+/opt/xilinx/Xilinx_Vivado_Vitis_2022.1/Vivado/2022.1/bin/vivado -mode batch -source scripts/check_project.tcl
+```
+
+The open check does not run simulation. A hardware correctness run still needs
+the original model vectors or validated TP-NTT/HBM layout conversion of the
+replacement model vectors.
 
 Then click:
 
@@ -123,7 +142,15 @@ For hardware emulation or real FPGA testing, go to the HBM interface directory:
 
 ```bash
 cd HBM_interface
+source source_me
 ```
+
+The build defaults to Vivado and Vitis 2022.1 under
+`/opt/xilinx/Xilinx_Vivado_Vitis_2022.1`, XRT under `/opt/xilinx/xrt`, and
+platforms under `/opt/xilinx/platforms`. Override `XILINX_ROOT`, `XILINX_XRT`,
+or `PLATFORM_REPO_PATHS` for another installation. Individual make tool paths
+can be overridden with `VIVADO=...` and `VPP=...`. Temporary compiler files
+default to the build directory; `TMPDIR` can override this.
 
 Copy the generated test vectors from:
 
@@ -163,6 +190,77 @@ This runs the design in hardware emulation mode for the Alveo U280 platform.
 Real hardware execution can be built and run with `TARGET=hw`.
 
 This may take several hours.
+
+Build commands also work from the repository root:
+
+```bash
+make build TARGET=hw
+make build-status TARGET=hw
+```
+
+New outputs go to `build/<platform>/<target>/` at the repository root.
+`BUILD_ROOT=/absolute/path` overrides this location. Existing active builds under
+`HBM_interface/build/` must finish in place: Vivado embeds absolute paths in its
+projects and run scripts. Inspect those with
+`make build-status TARGET=hw BUILD_ROOT="$PWD/HBM_interface/build"` from the root.
+Do not move an active project or start a second build against its output directory.
+Completed `.xclbin` files can be copied to the new build directory for execution;
+moving intermediate projects does not make them safely resumable.
+
+Hardware builds skip Verilog and VHDL functional simulation netlist exports for
+the large `ulp_kernel_1_0_synth_1` run. Checkpoints and synthesis stubs are retained.
+The hardware-only Tcl pre-hook also prevents that kernel from publishing an
+incomplete IP cache entry. Platform IP caching is retained. Hardware emulation
+and RTL simulation retain the normal export flow. No extra flag is required.
+These changes apply to subsequent builds, not the already-running build.
+
+The current run spent about 37 minutes in kernel synthesis and another 22 minutes
+in its first VHDL export, followed by a second VHDL export. Skipping the exports
+removes those export costs; the total saving needs a full build measurement.
+Packaging now creates the testbench block design only for `make sim`.
+Host compilation tracks source/header timestamps instead of recompiling every time.
+
+For `TARGET=hw`, the Vivado route step writes `hierarchical_utilization_routed.rpt`
+in the implementation run directory, with resource counts by instantiated module.
+`make cleanbuild` removes the complete configured build root, including reports,
+temporary files, logs, and checkpoints. `make cleanall` also removes local Vivado
+and IP cache directories.
+
+Further build-time considerations:
+
+* The active kernel run refused cache publication because of duplicate-declaration
+  critical warnings. The current RTL already removes those declarations. Other
+  critical warnings should be fixed rather than hidden.
+* The configured 32 synthesis jobs run separate IPs concurrently. Once only the
+  kernel remains, increasing that number cannot accelerate its single synthesis.
+  Implementation jobs similarly do not mean threads within one routing run.
+* Placement, routing, and timing closure remain necessary at the requested 200 MHz.
+  Do not lower effort or change the clock without measuring timing and runtime.
+* Keep intermediates and platform caches between builds. Completed links are
+  timestamp-tracked. `cleanbuild` removes the new build root, and `cleanall` also
+  removes the shared IP cache; neither is a routine prerequisite to building.
+* `continue-dcp` and `continue-bit` reuse completed implementation artifacts; they
+  are not a resume mechanism for an unfinished synthesis run. Their output is
+  `<build-dir>/continue/kernel.xclbin`.
+
+The link progress counter counts completed blocks, not work within a block.
+`226 of 227 jobs complete` can persist while the large relinearization kernel
+synthesizes. Inspect the child logs from another terminal:
+
+```bash
+make build-status TARGET=hw
+# Refresh periodically:
+watch -n 30 make build-status TARGET=hw
+```
+
+The status command reports unfinished/failed runs, log age, and the last messages.
+An old log alone does not prove a hang: check the Vivado process CPU usage and
+memory on the build host before stopping it. A running marker can remain after
+an interrupted process. Avoid starting another build in the same output directory
+while one is active. `make build` tracks RTL/header and packaging changes and
+reuses an up-to-date final xclbin; it does not resume an interrupted link.
+The existing `make kill` target kills all matching tools and should not be used
+on a shared host.
 
 Before running the hardware test, open:
 

@@ -1,25 +1,63 @@
-# __pycache__/
-# #*.txt
-# *.jou
-# #*.log
-# *.wcfg
-# *.str
-# *.bin
-# *.rpt
-# *.dcp
-# *.bit
-# *.hwh
-# *.xml
-# *.ltx
-# *.xsa
-# *.sdk
-# *.hw
-# *.hwdef
-# *.sysdef
-# *.runs
-# *.srcs
-# *.data
-# *.ip_user_files
-# *.sim
-# *.cache
-# *.webtalk
+# Build and run products
+/build/
+/HBM_interface/build/
+/HBM_interface/run/
+/HBM_interface/_pack/
+/HBM_interface/pack/
+/HBM_interface/*.tar.gz
+/HBM_interface/scripts/kernel/computed/
+/HBM_interface/scripts/kernel/test_vectors/
+/software_model/test_vectors/
+
+# Vivado/Vitis generated directories; keep .xpr, .srcs IP configs, and Tcl.
+.Xil/
+.run/
+.ipcache/
+*.cache/
+*.gen/
+*.runs/
+*.sim/
+*.ip_user_files/
+*.hw/
+*.sdk/
+*.data/
+*.xpr.lock
+
+# Tool logs, reports, compiled kernels, and implementation outputs
+*.jou
+*.log
+*.str
+*.rpt
+*.pb
+*.wdb
+*.wcfg
+*.vcd
+*.vpd
+*.dcp
+*.bit
+*.bin
+*.xclbin
+*.xo
+*.ltx
+*.hwh
+*.xsa
+*.hwdef
+*.sysdef
+*.link_summary
+*.compile_summary
+*.pinfo
+usage_statistics_webtalk.*
+vivado_pid*.zip
+/HBM_interface/out.txt
+/HBM_interface/run.txt
+
+# Python and editor files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
