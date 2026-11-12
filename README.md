@@ -17,18 +17,8 @@ git clone <repository-url> Relin-FPGA
 cd Relin-FPGA
 ```
 
-Initialize and update the RTL submodules:
-
-```bash
-git submodule update --init --recursive
-```
-
-Alternatively, the repository can be cloned directly with submodules using:
-
-```bash
-git clone --recursive <repository-url> Relin-FPGA
-cd Relin-FPGA
-```
+TP-NTT and its modular arithmetic dependency are included directly in this
+repository; no submodule initialization is required.
 
 ---
 

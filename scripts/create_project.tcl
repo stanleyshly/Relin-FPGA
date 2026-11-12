@@ -25,7 +25,7 @@ set source_paths {}
 foreach source $sources {
     set path [file normalize [file join $root HBM_interface $source]]
     if {![file exists $path]} {
-        puts "WARNING: Skipping missing RTL source: $path (initialize submodules recursively to restore it)"
+        puts "WARNING: Skipping missing RTL source: $path (restore it from the repository checkout)"
         continue
     }
     lappend source_paths $path
