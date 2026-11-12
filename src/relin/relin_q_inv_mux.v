@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module relin_q_inv_mux
    #(   
         parameter LOGN     = 16,
@@ -106,7 +107,16 @@ if (LOGQ == 60) begin
         end
     end
 end else if(LOGQ == 32) begin
-    if (LOGN == 13) begin
+    if (LOGN == 12) begin
+        // L=2, p=0x80340001; p^-1 in Montgomery representation (R=2^32).
+        always @(*) begin
+            case (i)
+                0: q_inv = 32'h00000800;
+                1: q_inv = 32'h00008000;
+                default: q_inv = {LOGQ{1'bx}};
+            endcase
+        end
+    end else if (LOGN == 13) begin
         always @(*) begin
             case (i)
                 0 : q_inv = 32'h0B3C262D;

@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 `include "modadd.svh"
 `include "modsub.svh"
 `include "modmul_wlm.svh"
@@ -18,7 +19,8 @@ module relin_final_op
         parameter USE_CSA    = 1 ,
         parameter FF_CSA     = 1 ,
         parameter MORE_DSP   = 0 ,
-        parameter NON_STD    = 1
+        parameter NON_STD    = 1,
+        localparam TP = 1 << LOGTP
     )
     (
         input                   clk       ,
@@ -38,16 +40,16 @@ module relin_final_op
 
 ///////////////////////////// Parameters ////////////////////////////////
 
-localparam modadd_params_t modadd_params = {LOGQ, LOGQH, 1, FF_ADDSUB, 1};
+localparam modadd_params_t modadd_params = '{LOGQ, LOGQH, 1, FF_ADDSUB, 1};
 localparam LAT_ADD = modadd_lat(modadd_params);
 
-localparam modsub_params_t modsub0_params = {LOGQ, LOGQH, 1, FF_ADDSUB, 1};
+localparam modsub_params_t modsub0_params = '{LOGQ, LOGQH, 1, FF_ADDSUB, 1};
 localparam LAT_SUB0 = modsub_lat(modsub0_params);
 
-localparam modsub_params_t modsub1_params = {LOGQ, LOGQH, 0, FF_ADDSUB, 1};
+localparam modsub_params_t modsub1_params = '{LOGQ, LOGQH, 0, FF_ADDSUB, 1};
 localparam LAT_SUB1 = modsub_lat(modsub1_params);
 
-localparam modmul_wlm_params_t modmul_params = {LOGQ, LOGQH, 1, 0, FF_MUL, FF_SUM, FF_SUB, 1, USE_CSA, FF_CSA, MORE_DSP, NON_STD};
+localparam modmul_wlm_params_t modmul_params = '{LOGQ, LOGQH, 1, 0, FF_MUL, FF_SUM, FF_SUB, 1, USE_CSA, FF_CSA, MORE_DSP, NON_STD};
 localparam LAT_MUL = modmul_wlm_lat(modmul_params);
 
 localparam LAT_BRAM_READ = 2;
@@ -56,7 +58,7 @@ localparam LAT_LAST = LAT_ADD + 2;
 localparam LAT = LAT_SUB0 + LAT_SUB1 + LAT_MUL + LAT_ADD + LAT_BRAM_READ + 1; 
 
 localparam K  = 1 << LOGK;
-localparam TP = 1 << LOGTP;
+
 
 localparam A_SHIFT = LAT_SUB0 + LAT_BRAM_READ - 1; 
 localparam B_SHIFT = LAT - LAT_ADD - 1; 
@@ -187,6 +189,7 @@ if (EN_ADD) begin
         .RST_EN (0          )
     ) shift_reg_B (
         .clk    (clk         ),
+    .rst (rst),
         .i_data (B           ),
         .o_data (B_d         )
     );

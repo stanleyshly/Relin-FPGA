@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module relin_half_mux #(
     parameter LOGN = 16,
     parameter LOGL     = 30, // number of primes
@@ -19,7 +20,7 @@ localparam [LOGQ-1:0] HALF_VAL =
                        64'h0400d40000000000
     ) :
     (LOGQ == 32) ? (
-        (LOGN == 12) ? 32'h401a0000 : // not correct !!
+        (LOGN == 12) ? 32'h401a0000 : // floor(p/2), p=0x80340001, L=2
         (LOGN == 13) ? 32'h40430000 : 
         (LOGN == 14) ? 32'h40a00000 :
         (LOGN == 15) ? 32'h414c0000 : 

@@ -1016,6 +1016,7 @@ localparam TP = 1 << LOGTP;
   //////////////////////////////////////////////////////////////////////////////
   // Kernel Interfacing Signals
 
+  reg ap_done_r = 1'b0;
   reg ap_is_busy = 1'b0;
   always @(posedge ap_clk)
     if (~ap_rst_n || ap_done)
@@ -1028,7 +1029,7 @@ localparam TP = 1 << LOGTP;
   assign ap_ready = ap_done;
   assign ap_done  = cmd_done & ~ap_done_r;
 
-  reg ap_done_r = 1'b0;
+
   always @(posedge ap_clk)
     ap_done_r <= cmd_done;
 

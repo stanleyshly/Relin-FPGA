@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module stateful_mux
     #(   
         parameter WIDTH = 1

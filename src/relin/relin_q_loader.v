@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module relin_q_loader
    #(   
         parameter LOGN     = 16,

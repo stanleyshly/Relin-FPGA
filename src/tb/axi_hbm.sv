@@ -1,7 +1,9 @@
+`timescale 1ns / 1ps
 module axi_hbm
    #(
         parameter MEM_FILE_WIDTH_USR = 64, // 64 for logq=60, 32 for logq=32
         parameter L = 4,
+        parameter LOGN = 12,
         parameter integer HBM_ADDR_WIDTH             = 64,
         parameter integer HBM_DATA_WIDTH             = 256,
         parameter integer C_M00_AXI_ADDR_WIDTH       = HBM_ADDR_WIDTH,
@@ -850,15 +852,15 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/ct2_"),
+    .MEM_FILE_0("ct2_"),
     .MEM_FILE_0_NUM(L),
     .STRIDE_0(8),
     .OFFSET_0(0),
-    .MEM_FILE_1("../../../../../model/BFV/test_vectors/psi_"),
+    .MEM_FILE_1("psi_"),
     .MEM_FILE_1_NUM(L + 1),
     .STRIDE_1(8),
     .OFFSET_1(0),
-    .MEM_FILE_2("../../../../../model/BFV/test_vectors/psi_inv_"),
+    .MEM_FILE_2("psi_inv_"),
     .MEM_FILE_2_NUM(L + 1),
     .STRIDE_2(8),
     .OFFSET_2(0),
@@ -909,15 +911,15 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/ct2_"),
+    .MEM_FILE_0("ct2_"),
     .MEM_FILE_0_NUM(L),
     .STRIDE_0(8),
     .OFFSET_0(1),
-    .MEM_FILE_1("../../../../../model/BFV/test_vectors/psi_"),
+    .MEM_FILE_1("psi_"),
     .MEM_FILE_1_NUM(L + 1),
     .STRIDE_1(8),
     .OFFSET_1(1),
-    .MEM_FILE_2("../../../../../model/BFV/test_vectors/psi_inv_"),
+    .MEM_FILE_2("psi_inv_"),
     .MEM_FILE_2_NUM(L + 1),
     .STRIDE_2(8),
     .OFFSET_2(1),
@@ -968,15 +970,15 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/ct2_"),
+    .MEM_FILE_0("ct2_"),
     .MEM_FILE_0_NUM(L),
     .STRIDE_0(8),
     .OFFSET_0(2),
-    .MEM_FILE_1("../../../../../model/BFV/test_vectors/psi_"),
+    .MEM_FILE_1("psi_"),
     .MEM_FILE_1_NUM(L + 1),
     .STRIDE_1(8),
     .OFFSET_1(2),
-    .MEM_FILE_2("../../../../../model/BFV/test_vectors/psi_inv_"),
+    .MEM_FILE_2("psi_inv_"),
     .MEM_FILE_2_NUM(L + 1),
     .STRIDE_2(8),
     .OFFSET_2(2),
@@ -1027,15 +1029,15 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/ct2_"),
+    .MEM_FILE_0("ct2_"),
     .MEM_FILE_0_NUM(L),
     .STRIDE_0(8),
     .OFFSET_0(3),
-    .MEM_FILE_1("../../../../../model/BFV/test_vectors/psi_"),
+    .MEM_FILE_1("psi_"),
     .MEM_FILE_1_NUM(L + 1),
     .STRIDE_1(8),
     .OFFSET_1(3),
-    .MEM_FILE_2("../../../../../model/BFV/test_vectors/psi_inv_"),
+    .MEM_FILE_2("psi_inv_"),
     .MEM_FILE_2_NUM(L + 1),
     .STRIDE_2(8),
     .OFFSET_2(3),
@@ -1086,15 +1088,15 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/ct2_"),
+    .MEM_FILE_0("ct2_"),
     .MEM_FILE_0_NUM(L),
     .STRIDE_0(8),
     .OFFSET_0(4),
-    .MEM_FILE_1("../../../../../model/BFV/test_vectors/psi_"),
+    .MEM_FILE_1("psi_"),
     .MEM_FILE_1_NUM(L + 1),
     .STRIDE_1(8),
     .OFFSET_1(4),
-    .MEM_FILE_2("../../../../../model/BFV/test_vectors/psi_inv_"),
+    .MEM_FILE_2("psi_inv_"),
     .MEM_FILE_2_NUM(L + 1),
     .STRIDE_2(8),
     .OFFSET_2(4),
@@ -1145,15 +1147,15 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/ct2_"),
+    .MEM_FILE_0("ct2_"),
     .MEM_FILE_0_NUM(L),
     .STRIDE_0(8),
     .OFFSET_0(5),
-    .MEM_FILE_1("../../../../../model/BFV/test_vectors/psi_"),
+    .MEM_FILE_1("psi_"),
     .MEM_FILE_1_NUM(L + 1),
     .STRIDE_1(8),
     .OFFSET_1(5),
-    .MEM_FILE_2("../../../../../model/BFV/test_vectors/psi_inv_"),
+    .MEM_FILE_2("psi_inv_"),
     .MEM_FILE_2_NUM(L + 1),
     .STRIDE_2(8),
     .OFFSET_2(5),
@@ -1204,15 +1206,15 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/ct2_"),
+    .MEM_FILE_0("ct2_"),
     .MEM_FILE_0_NUM(L),
     .STRIDE_0(8),
     .OFFSET_0(6),
-    .MEM_FILE_1("../../../../../model/BFV/test_vectors/psi_"),
+    .MEM_FILE_1("psi_"),
     .MEM_FILE_1_NUM(L + 1),
     .STRIDE_1(8),
     .OFFSET_1(6),
-    .MEM_FILE_2("../../../../../model/BFV/test_vectors/psi_inv_"),
+    .MEM_FILE_2("psi_inv_"),
     .MEM_FILE_2_NUM(L + 1),
     .STRIDE_2(8),
     .OFFSET_2(6),
@@ -1263,15 +1265,15 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/ct2_"),
+    .MEM_FILE_0("ct2_"),
     .MEM_FILE_0_NUM(L),
     .STRIDE_0(8),
     .OFFSET_0(7),
-    .MEM_FILE_1("../../../../../model/BFV/test_vectors/psi_"),
+    .MEM_FILE_1("psi_"),
     .MEM_FILE_1_NUM(L + 1),
     .STRIDE_1(8),
     .OFFSET_1(7),
-    .MEM_FILE_2("../../../../../model/BFV/test_vectors/psi_inv_"),
+    .MEM_FILE_2("psi_inv_"),
     .MEM_FILE_2_NUM(L + 1),
     .STRIDE_2(8),
     .OFFSET_2(7),
@@ -1322,15 +1324,15 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/relinkey_0_"),
+    .MEM_FILE_0("relinkey_0_"),
     .MEM_FILE_0_NUM(L*(L+1)),
     .STRIDE_0(8),
     .OFFSET_0(0),
-    .MEM_FILE_1("../../../../../model/BFV/test_vectors/ct0_"),
+    .MEM_FILE_1("ct0_"),
     .MEM_FILE_1_NUM(L),
     .STRIDE_1(8),
     .OFFSET_1(0),
-    .MEM_FILE_2("../../../../../model/BFV/test_vectors/ct1_"),
+    .MEM_FILE_2("ct1_"),
     .MEM_FILE_2_NUM(L),
     .STRIDE_2(8),
     .OFFSET_2(0)
@@ -1380,15 +1382,15 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/relinkey_0_"),
+    .MEM_FILE_0("relinkey_0_"),
     .MEM_FILE_0_NUM(L*(L+1)),
     .STRIDE_0(8),
     .OFFSET_0(1),
-    .MEM_FILE_1("../../../../../model/BFV/test_vectors/ct0_"),
+    .MEM_FILE_1("ct0_"),
     .MEM_FILE_1_NUM(L),
     .STRIDE_1(8),
     .OFFSET_1(1),
-    .MEM_FILE_2("../../../../../model/BFV/test_vectors/ct1_"),
+    .MEM_FILE_2("ct1_"),
     .MEM_FILE_2_NUM(L),
     .STRIDE_2(8),
     .OFFSET_2(1)
@@ -1438,15 +1440,15 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/relinkey_0_"),
+    .MEM_FILE_0("relinkey_0_"),
     .MEM_FILE_0_NUM(L*(L+1)),
     .STRIDE_0(8),
     .OFFSET_0(2),
-    .MEM_FILE_1("../../../../../model/BFV/test_vectors/ct0_"),
+    .MEM_FILE_1("ct0_"),
     .MEM_FILE_1_NUM(L),
     .STRIDE_1(8),
     .OFFSET_1(2),
-    .MEM_FILE_2("../../../../../model/BFV/test_vectors/ct1_"),
+    .MEM_FILE_2("ct1_"),
     .MEM_FILE_2_NUM(L),
     .STRIDE_2(8),
     .OFFSET_2(2)
@@ -1496,15 +1498,15 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/relinkey_0_"),
+    .MEM_FILE_0("relinkey_0_"),
     .MEM_FILE_0_NUM(L*(L+1)),
     .STRIDE_0(8),
     .OFFSET_0(3),
-    .MEM_FILE_1("../../../../../model/BFV/test_vectors/ct0_"),
+    .MEM_FILE_1("ct0_"),
     .MEM_FILE_1_NUM(L),
     .STRIDE_1(8),
     .OFFSET_1(3),
-    .MEM_FILE_2("../../../../../model/BFV/test_vectors/ct1_"),
+    .MEM_FILE_2("ct1_"),
     .MEM_FILE_2_NUM(L),
     .STRIDE_2(8),
     .OFFSET_2(3)
@@ -1554,15 +1556,15 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/relinkey_0_"),
+    .MEM_FILE_0("relinkey_0_"),
     .MEM_FILE_0_NUM(L*(L+1)),
     .STRIDE_0(8),
     .OFFSET_0(4),
-    .MEM_FILE_1("../../../../../model/BFV/test_vectors/ct0_"),
+    .MEM_FILE_1("ct0_"),
     .MEM_FILE_1_NUM(L),
     .STRIDE_1(8),
     .OFFSET_1(4),
-    .MEM_FILE_2("../../../../../model/BFV/test_vectors/ct1_"),
+    .MEM_FILE_2("ct1_"),
     .MEM_FILE_2_NUM(L),
     .STRIDE_2(8),
     .OFFSET_2(4)
@@ -1612,15 +1614,15 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/relinkey_0_"),
+    .MEM_FILE_0("relinkey_0_"),
     .MEM_FILE_0_NUM(L*(L+1)),
     .STRIDE_0(8),
     .OFFSET_0(5),
-    .MEM_FILE_1("../../../../../model/BFV/test_vectors/ct0_"),
+    .MEM_FILE_1("ct0_"),
     .MEM_FILE_1_NUM(L),
     .STRIDE_1(8),
     .OFFSET_1(5),
-    .MEM_FILE_2("../../../../../model/BFV/test_vectors/ct1_"),
+    .MEM_FILE_2("ct1_"),
     .MEM_FILE_2_NUM(L),
     .STRIDE_2(8),
     .OFFSET_2(5)
@@ -1670,15 +1672,15 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/relinkey_0_"),
+    .MEM_FILE_0("relinkey_0_"),
     .MEM_FILE_0_NUM(L*(L+1)),
     .STRIDE_0(8),
     .OFFSET_0(6),
-    .MEM_FILE_1("../../../../../model/BFV/test_vectors/ct0_"),
+    .MEM_FILE_1("ct0_"),
     .MEM_FILE_1_NUM(L),
     .STRIDE_1(8),
     .OFFSET_1(6),
-    .MEM_FILE_2("../../../../../model/BFV/test_vectors/ct1_"),
+    .MEM_FILE_2("ct1_"),
     .MEM_FILE_2_NUM(L),
     .STRIDE_2(8),
     .OFFSET_2(6)
@@ -1728,15 +1730,15 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/relinkey_0_"),
+    .MEM_FILE_0("relinkey_0_"),
     .MEM_FILE_0_NUM(L*(L+1)),
     .STRIDE_0(8),
     .OFFSET_0(7),
-    .MEM_FILE_1("../../../../../model/BFV/test_vectors/ct0_"),
+    .MEM_FILE_1("ct0_"),
     .MEM_FILE_1_NUM(L),
     .STRIDE_1(8),
     .OFFSET_1(7),
-    .MEM_FILE_2("../../../../../model/BFV/test_vectors/ct1_"),
+    .MEM_FILE_2("ct1_"),
     .MEM_FILE_2_NUM(L),
     .STRIDE_2(8),   
     .OFFSET_2(7)
@@ -1786,7 +1788,7 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/relinkey_1_"),
+    .MEM_FILE_0("relinkey_1_"),
     .MEM_FILE_0_NUM(L*(L+1)),
     .STRIDE_0(8),
     .OFFSET_0(0)
@@ -1836,7 +1838,7 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/relinkey_1_"),
+    .MEM_FILE_0("relinkey_1_"),
     .MEM_FILE_0_NUM(L*(L+1)),
     .STRIDE_0(8),
     .OFFSET_0(1)
@@ -1886,7 +1888,7 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/relinkey_1_"),
+    .MEM_FILE_0("relinkey_1_"),
     .MEM_FILE_0_NUM(L*(L+1)),
     .STRIDE_0(8),
     .OFFSET_0(2)
@@ -1936,7 +1938,7 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/relinkey_1_"),
+    .MEM_FILE_0("relinkey_1_"),
     .MEM_FILE_0_NUM(L*(L+1)),
     .STRIDE_0(8),
     .OFFSET_0(3)
@@ -1986,7 +1988,7 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/relinkey_1_"),
+    .MEM_FILE_0("relinkey_1_"),
     .MEM_FILE_0_NUM(L*(L+1)),
     .STRIDE_0(8),
     .OFFSET_0(4)
@@ -2036,7 +2038,7 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/relinkey_1_"),
+    .MEM_FILE_0("relinkey_1_"),
     .MEM_FILE_0_NUM(L*(L+1)),
     .STRIDE_0(8),
     .OFFSET_0(5)
@@ -2086,7 +2088,7 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/relinkey_1_"),
+    .MEM_FILE_0("relinkey_1_"),
     .MEM_FILE_0_NUM(L*(L+1)),
     .STRIDE_0(8),
     .OFFSET_0(6)
@@ -2136,7 +2138,7 @@ axi_ram #(
     .ID_WIDTH(1),
     .PIPELINE_OUTPUT(0),
     .MEM_FILE_WIDTH(MEM_FILE_WIDTH_USR),
-    .MEM_FILE_0("../../../../../model/BFV/test_vectors/relinkey_1_"),
+    .MEM_FILE_0("relinkey_1_"),
     .MEM_FILE_0_NUM(L*(L+1)),
     .STRIDE_0(8),
     .OFFSET_0(7)
@@ -2550,10 +2552,10 @@ axi_ram #(
 
 localparam MEM_OUT_STRIDE = 8;
 
-localparam MEM_OUT_FILE_0     = "../../../../../model/BFV/test_vectors/relin_ct0_";
+localparam MEM_OUT_FILE_0     = "relin_ct0_";
 localparam MEM_OUT_FILE_0_NUM = L;
 
-localparam MEM_OUT_FILE_1     = "../../../../../model/BFV/test_vectors/relin_ct1_";
+localparam MEM_OUT_FILE_1     = "relin_ct1_";
 localparam MEM_OUT_FILE_1_NUM = L;
 
 localparam MEM_FILE_WIDTH  = MEM_FILE_WIDTH_USR;//64;
@@ -2571,12 +2573,19 @@ initial begin
     integer div;
 
     string mem_file;
+    string vector_dir;
     integer stride;
     integer offset;
     integer mem_num;
     integer i,j;
 
 
+    if (!$value$plusargs("RELIN_VECTOR_DIR=%s", vector_dir))
+        vector_dir = "../../../../../test_vectors/relin";
+    if ($test$plusargs("RELIN_TIMING_ONLY")) begin
+        wait(done);
+        $display("TIMING_ONLY: output verification skipped; no correctness claim");
+    end else begin
     wait(done);
 
 
@@ -2603,13 +2612,13 @@ initial begin
             end
         endcase
     
+        mem_file = {vector_dir, "/", mem_file};
         $display("Stride: %0d, MemFile: %s, MemNum: %0d", stride, mem_file, mem_num);
 
         for (i = 0; i < mem_num; i = i + 1) begin
             file = $fopen({mem_file, $sformatf("%0d", i), ".txt"}, "r");
             if (file == 0) begin
-                $error("Error: Unable to open file %s", {mem_file, $sformatf("%0d", i), ".txt"});
-                $finish;
+                $fatal(1, "Missing expected output: %s", {mem_file, $sformatf("%0d", i), ".txt"});
             end
 
             index_temp = 0;
@@ -2632,23 +2641,24 @@ initial begin
                                                         axi_ram_m31.mem[index_strided] ;
 
                         if (temp_data_mem !== temp_data_large) begin
-                            $error("Error: Data mismatch at index %0d, expected %h, got %h", index_strided, temp_data_large, temp_data_mem);
-                            $finish;
+                            $fatal(1, "Output mismatch: %s polynomial=%0d packed_word=%0d expected=%h got=%h", mem_file, i, index_strided, temp_data_large, temp_data_mem);
                             $error("Error: filename %s", {mem_file, $sformatf("%0d", i), ".txt"});
                         end
                         index = index + 1;
                         index_strided = index >> 3;
                     end
                 end else begin
-                    $error("Error: Invalid data format in file %s", {mem_file, $sformatf("%0d", i), ".txt"});
-                    $finish;
+                    $fatal(1, "Invalid expected output format: %s", {mem_file, $sformatf("%0d", i), ".txt"});
                 end
             end
             $fclose(file);
         end
     end
-    $display("HBM Read Data Verification Completed");
+    if (index != (2 * L * (1 << LOGN)) / div)
+        $fatal(1, "Expected output file length mismatch: checked %0d packed words", index);
+    $display("FUNCTIONAL_RESULT: PASS; checked %0d output coefficients", index * div);
     $finish;
+    end // hardware-vector verification
 end
 
 

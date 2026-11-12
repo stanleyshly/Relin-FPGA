@@ -43,7 +43,6 @@
     <Option Name="SimulatorGccVersionVCS" Val="9.2.0"/>
     <Option Name="SimulatorGccVersionRiviera" Val="9.3.0"/>
     <Option Name="SimulatorGccVersionActiveHdl" Val="9.3.0"/>
-    <Option Name="BoardPart" Val=""/>
     <Option Name="ActiveSimSet" Val="sim_hbm"/>
     <Option Name="DefaultLib" Val="xil_defaultlib"/>
     <Option Name="ProjectType" Val="Default"/>
@@ -59,7 +58,7 @@
     <Option Name="IPStaticSourceDir" Val="$PIPUSERFILESDIR/ipstatic"/>
     <Option Name="EnableBDX" Val="FALSE"/>
     <Option Name="NextGenVersal" Val="TRUE"/>
-    <Option Name="WTXSimLaunchSim" Val="0"/>
+    <Option Name="WTXSimLaunchSim" Val="21"/>
     <Option Name="WTModelSimLaunchSim" Val="0"/>
     <Option Name="WTQuestaLaunchSim" Val="0"/>
     <Option Name="WTIesLaunchSim" Val="0"/>
@@ -624,6 +623,7 @@
       </Config>
     </FileSet>
     <FileSet Name="sim_1" Type="SimulationSrcs" RelSrcDir="$PSRCDIR/sim_1" RelGenDir="$PGENDIR/sim_1">
+      <Filter Type="Srcs"/>
       <Config>
         <Option Name="DesignMode" Val="RTL"/>
         <Option Name="TopAutoSet" Val="TRUE"/>
@@ -648,6 +648,7 @@
       </Config>
     </FileSet>
     <FileSet Name="sim_hbm" Type="SimulationSrcs" RelSrcDir="$PSRCDIR/sim_hbm" RelGenDir="$PGENDIR/sim_hbm">
+      <Filter Type="Srcs"/>
       <File Path="$PPRDIR/../src/tb/axi_hbm.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -663,6 +664,13 @@
         </FileInfo>
       </File>
       <File Path="$PPRDIR/../src/tb/kernel_tb.v">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../HBM_interface/src/rtl/kernel/fifo_sync_v80.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -691,9 +699,12 @@
         <Option Name="CosimPlatform" Val=""/>
         <Option Name="CosimElf" Val=""/>
         <Option Name="Dmv" Val=""/>
+        <Option Name="xsim.simulate.runtime" Val="0ns"/>
+        <Option Name="xsim.simulate.xsim.more_options" Val="-testplusarg RELIN_PROFILE -testplusarg RELIN_VECTOR_DIR=/data/ss3679/Relin-FPGA/build/functional-vectors/seed-1"/>
       </Config>
     </FileSet>
     <FileSet Name="sim_relin" Type="SimulationSrcs" RelSrcDir="$PSRCDIR/sim_relin" RelGenDir="$PGENDIR/sim_relin">
+      <Filter Type="Srcs"/>
       <File Path="$PPRDIR/../src/tb/relin_tb.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -726,6 +737,7 @@
       </Config>
     </FileSet>
     <FileSet Name="sim_hadamard" Type="SimulationSrcs" RelSrcDir="$PSRCDIR/sim_hadamard" RelGenDir="$PGENDIR/sim_hadamard">
+      <Filter Type="Srcs"/>
       <File Path="$PPRDIR/../src/tb/hadamard_tb.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -758,6 +770,7 @@
       </Config>
     </FileSet>
     <FileSet Name="sim_accumulator" Type="SimulationSrcs" RelSrcDir="$PSRCDIR/sim_accumulator" RelGenDir="$PGENDIR/sim_accumulator">
+      <Filter Type="Srcs"/>
       <File Path="$PPRDIR/../src/tb/accumulator_tb.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -790,6 +803,7 @@
       </Config>
     </FileSet>
     <FileSet Name="sim_final_op" Type="SimulationSrcs" RelSrcDir="$PSRCDIR/sim_final_op" RelGenDir="$PGENDIR/sim_final_op">
+      <Filter Type="Srcs"/>
       <File Path="$PPRDIR/../src/tb/final_op_tb.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -846,9 +860,7 @@
   <Runs Version="1" Minor="22">
     <Run Id="synth_1" Type="Ft3:Synth" SrcSet="sources_1" Part="xcv80-lsva4737-2MHP-e-S" ConstrsSet="constrs_1" Description="Vivado Synthesis Defaults" AutoIncrementalCheckpoint="true" WriteIncrSynthDcp="false" State="current" IncludeInArchive="true" IsChild="false" AutoIncrementalDir="$PSRCDIR/utils_1/imports/synth_1" AutoRQSDir="$PSRCDIR/utils_1/imports/synth_1" ParallelReportGen="true">
       <Strategy Version="1" Minor="2">
-        <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2025">
-          <Desc>Vivado Synthesis Defaults</Desc>
-        </StratHandle>
+        <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2025"/>
         <Step Id="synth_design"/>
       </Strategy>
       <ReportStrategy Name="Vivado Synthesis Default Reports" Flow="Vivado Synthesis 2025"/>
@@ -857,9 +869,7 @@
     </Run>
     <Run Id="impl_1" Type="Ft8:AdvanceImpl" Part="xcv80-lsva4737-2MHP-e-S" ConstrsSet="constrs_1" Description="Default settings for Advanced Implementation." AutoIncrementalCheckpoint="false" WriteIncrSynthDcp="false" State="current" SynthRun="synth_1" IncludeInArchive="true" IsChild="false" GenFullBitstream="true" AutoIncrementalDir="$PSRCDIR/utils_1/imports/impl_1" AutoRQSDir="$PSRCDIR/utils_1/imports/impl_1" ParallelReportGen="true">
       <Strategy Version="1" Minor="2">
-        <StratHandle Name="Vivado Advanced Implementation Defaults" Flow="Vivado Advanced Implementation 2025">
-          <Desc>Default settings for Advanced Implementation.</Desc>
-        </StratHandle>
+        <StratHandle Name="Vivado Advanced Implementation Defaults" Flow="Vivado Advanced Implementation 2025"/>
         <Step Id="init_design"/>
         <Step Id="opt_design"/>
         <Step Id="power_opt_design"/>

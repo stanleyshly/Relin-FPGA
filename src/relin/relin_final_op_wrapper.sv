@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module relin_final_op_wrapper
    #(
         parameter LOGK       = 10,
@@ -15,7 +16,8 @@ module relin_final_op_wrapper
         parameter FF_CSA     = 1 ,
         parameter MORE_DSP   = 0 ,
         parameter NON_STD    = 1 ,      
-        parameter L          = 30
+        parameter L          = 30,
+        localparam TP = 1 << LOGTP
     )
     (
         input                   clk       ,
@@ -34,7 +36,7 @@ module relin_final_op_wrapper
 
 
 localparam LOGL = $rtoi($ceil($clog2(L + 1)));
-localparam TP = 1 << LOGTP;
+
 localparam LOGN = LOGK + LOGTP;
 
 

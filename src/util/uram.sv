@@ -1,8 +1,10 @@
+`timescale 1ns / 1ps
 module uram
    #(
         parameter WIDTH  = 32  ,
         parameter LENGTH = 1024,
-        parameter FF_OUT = 1
+        parameter FF_OUT = 1,
+        parameter DEPTH = (LENGTH > 1) ? $clog2(LENGTH) : 1
     )
     (   input                  clk,
         input                  wen,
@@ -13,7 +15,7 @@ module uram
     );
 
 
-localparam DEPTH = $rtoi($ceil($clog2(LENGTH)));
+
 
 
 wire [WIDTH-1:0] dout_int;

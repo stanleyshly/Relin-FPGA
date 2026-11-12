@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module pattern_gen
    #(
         parameter FEED = 2,

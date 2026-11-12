@@ -1,8 +1,10 @@
+`timescale 1ns / 1ps
 module relin_cu_p1_p2
    #(   
         parameter L        = 30,
         parameter ID_WIDTH = 4 ,
-        parameter EN_ADD   = 1
+        parameter EN_ADD   = 1,
+        localparam LOGL = $rtoi($ceil($clog2(L + 1)))
     )
     (
         input                     clk         ,
@@ -24,7 +26,7 @@ module relin_cu_p1_p2
 `include "relin_mem.svh"
 
 
-localparam LOGL  = $rtoi($ceil($clog2(L + 1)));
+
 
 
 typedef enum reg[10:0] {

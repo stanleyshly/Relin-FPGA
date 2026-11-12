@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module relin_ntt_mux
    #(   
         parameter LOGQ           = 64,
@@ -5,7 +6,8 @@ module relin_ntt_mux
         parameter LOGN           = 16,
         parameter LOGTP          = 5 ,
         parameter INTT_DELAY     = 2 ,
-        parameter PSI_CC        = (1 << (LOGN - LOGTP))
+        parameter PSI_CC        = (1 << (LOGN - LOGTP)),
+        localparam TP = 1 << LOGTP
     )
     (
         input              clk                  ,
@@ -27,7 +29,7 @@ module relin_ntt_mux
     );
 
 
-localparam TP = 1 << LOGTP;
+
 localparam LOGK = (LOGN - LOGTP);
 
 wire [LOGQ-1:0] i_poly [0:TP-1];
@@ -49,6 +51,7 @@ shift_reg_arr #(
     .RST_EN (0         )
 ) i_poly_intt_A_shift_reg (
     .clk    (clk          ),
+    .rst (rst),
     .i_data (i_poly_intt  ),
     .o_data (i_poly_intt_d)
 );

@@ -1,10 +1,12 @@
+`timescale 1ns / 1ps
 module relin_accum 
    #(
         parameter LOGK      = 10,
         parameter LOGQ      = 60,   
         parameter LOGQH     = 47,
         parameter FF_ADD    = 0 ,
-        parameter LOGTP     = 32
+        parameter LOGTP     = 32,
+        localparam TP = (1 << LOGTP)
     )
     (
         input              clk       ,
@@ -24,7 +26,7 @@ module relin_accum
 
 ///////////////////////////// Parameters ////////////////////////////////
 
-localparam TP       = (1 << LOGTP);
+
 localparam K        = (1 << LOGK);
 localparam FF_IN    = 1;
 localparam FF_OUT   = 1;

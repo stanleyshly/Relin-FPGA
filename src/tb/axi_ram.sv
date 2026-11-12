@@ -35,12 +35,19 @@ module axi_ram #
     parameter DATA_WIDTH = 256,
     // Width of address bus in bits
     parameter ADDR_WIDTH = 64,
+    // Behavioral storage capacity is independent of AXI address width.
+    parameter MEM_ADDR_WIDTH = 20,
     // Width of wstrb (width of data bus in words)
     parameter STRB_WIDTH = (DATA_WIDTH/8),
     // Width of ID signal
     parameter ID_WIDTH = 8,
     // Extra pipeline register on output
     parameter PIPELINE_OUTPUT = 0,
+    // Fixed HBM read-command latency at 250 MHz; burst beats then stream at 1/cycle.
+    parameter READ_LATENCY = 8,
+    // Optional synchronous SRAM path: read the first word on AR acceptance.
+    // Default preserves the historical address/wait/burst state sequence.
+    parameter SRAM_READ_ON_ADDRESS = 0,
     /////////////////////////////////////////
     parameter MEM_FILE_WIDTH  = 64,
     parameter string MEM_FILE_0      = "",
@@ -101,12 +108,23 @@ module axi_ram #
     input  wire                   s_axi_rready
 );
 
-parameter VALID_ADDR_WIDTH = ADDR_WIDTH - $clog2(STRB_WIDTH);
+parameter VALID_ADDR_WIDTH = MEM_ADDR_WIDTH - $clog2(STRB_WIDTH);
 parameter WORD_WIDTH = STRB_WIDTH;
 parameter WORD_SIZE = DATA_WIDTH/WORD_WIDTH;
 
+// Reject addresses outside modeled capacity rather than aliasing them.
+always @(posedge clk) begin
+    if (!rst && s_axi_arvalid && s_axi_arready && (s_axi_araddr >> MEM_ADDR_WIDTH) != 0)
+        $fatal(1, "Read address exceeds modeled RAM capacity");
+    if (!rst && s_axi_awvalid && s_axi_awready && (s_axi_awaddr >> MEM_ADDR_WIDTH) != 0)
+        $fatal(1, "Write address exceeds modeled RAM capacity");
+end
+
 // bus width assertions
 initial begin
+    if (SRAM_READ_ON_ADDRESS && (READ_LATENCY != 1 || PIPELINE_OUTPUT != 0)) begin
+        $fatal(1, "SRAM address-edge reads require READ_LATENCY=1 and PIPELINE_OUTPUT=0");
+    end
     if (WORD_SIZE * STRB_WIDTH != DATA_WIDTH) begin
         $error("Error: AXI data width not evenly divisble (instance %m)");
         $finish;
@@ -118,11 +136,12 @@ initial begin
     end
 end
 
-localparam [0:0]
-    READ_STATE_IDLE = 1'd0,
-    READ_STATE_BURST = 1'd1;
+localparam [1:0]
+    READ_STATE_IDLE = 2'd0,
+    READ_STATE_WAIT = 2'd1,
+    READ_STATE_BURST = 2'd2;
 
-reg [0:0] read_state_reg = READ_STATE_IDLE, read_state_next;
+reg [1:0] read_state_reg = READ_STATE_IDLE, read_state_next;
 
 localparam [1:0]
     WRITE_STATE_IDLE = 2'd0,
@@ -137,6 +156,7 @@ reg mem_rd_en;
 reg [ID_WIDTH-1:0] read_id_reg = {ID_WIDTH{1'b0}}, read_id_next;
 reg [ADDR_WIDTH-1:0] read_addr_reg = {ADDR_WIDTH{1'b0}}, read_addr_next;
 reg [7:0] read_count_reg = 8'd0, read_count_next;
+reg [31:0] read_latency_count_reg = 0, read_latency_count_next;
 reg [2:0] read_size_reg = 3'd0, read_size_next;
 reg [1:0] read_burst_reg = 2'd0, read_burst_next;
 reg [ID_WIDTH-1:0] write_id_reg = {ID_WIDTH{1'b0}}, write_id_next;
@@ -163,10 +183,10 @@ reg s_axi_rvalid_pipe_reg = 1'b0;
 reg [DATA_WIDTH-1:0] mem[(1<<VALID_ADDR_WIDTH)-1:0];
 
 
-wire [VALID_ADDR_WIDTH-1:0] s_axi_awaddr_valid = s_axi_awaddr >> (ADDR_WIDTH - VALID_ADDR_WIDTH);
-wire [VALID_ADDR_WIDTH-1:0] s_axi_araddr_valid = s_axi_araddr >> (ADDR_WIDTH - VALID_ADDR_WIDTH);
-wire [VALID_ADDR_WIDTH-1:0] read_addr_valid = read_addr_reg >> (ADDR_WIDTH - VALID_ADDR_WIDTH);
-wire [VALID_ADDR_WIDTH-1:0] write_addr_valid = write_addr_reg >> (ADDR_WIDTH - VALID_ADDR_WIDTH);
+wire [VALID_ADDR_WIDTH-1:0] s_axi_awaddr_valid = s_axi_awaddr >> $clog2(STRB_WIDTH);
+wire [VALID_ADDR_WIDTH-1:0] s_axi_araddr_valid = s_axi_araddr >> $clog2(STRB_WIDTH);
+wire [VALID_ADDR_WIDTH-1:0] read_addr_valid = read_addr_reg >> $clog2(STRB_WIDTH);
+wire [VALID_ADDR_WIDTH-1:0] write_addr_valid = write_addr_reg >> $clog2(STRB_WIDTH);
 
 assign s_axi_awready = s_axi_awready_reg;
 assign s_axi_wready = s_axi_wready_reg;
@@ -202,11 +222,19 @@ initial begin
     integer div;
 
     string mem_file;
+    string vector_dir;
     integer stride;
     integer offset;
     integer mem_num;
 
 
+    if (!$value$plusargs("RELIN_VECTOR_DIR=%s", vector_dir))
+        vector_dir = "../../../../../test_vectors/relin";
+    if ($test$plusargs("RELIN_TIMING_ONLY")) begin
+        for (integer word_index = 0; word_index < (1 << VALID_ADDR_WIDTH); word_index = word_index + 1)
+            mem[word_index] = '0;
+        $display("TIMING_ONLY: %m zero-initialized; arithmetic is not verified");
+    end else begin
     div = DATA_WIDTH / MEM_FILE_WIDTH;
     if (div < 1) begin
         $error("Error: DATA_WIDTH must be greater than or equal to MEM_FILE_WIDTH");
@@ -243,13 +271,13 @@ initial begin
             end
         endcase
     
+        mem_file = {vector_dir, "/", mem_file};
         $display("Stride: %0d, Offset: %0d, MemFile: %s, MemNum: %0d", stride, offset, mem_file, mem_num);
 
         for (i = 0; i < mem_num; i = i + 1) begin
             file = $fopen({mem_file, $sformatf("%0d", i), ".txt"}, "r");
             if (file == 0) begin
-                $error("Error: Unable to open file %s", {mem_file, $sformatf("%0d", i), ".txt"});
-                $finish;
+                $fatal(1, "Missing hardware-layout vector: %s. Use --timing-only for a synthetic timing probe.", {mem_file, $sformatf("%0d", i), ".txt"});
             end
 
             index_temp = 0;
@@ -267,19 +295,20 @@ initial begin
                         index_temp = 0;
                         if ((index % stride) == offset) begin
                             mem[index_strided] = temp_data_large;
-                            $display("[%d] mem[%0d] = %h", offset, index_strided, mem[index_strided]);
+                            if ($test$plusargs("RELIN_DUMP_MEM"))
+                                $display("[%d] mem[%0d] = %h", offset, index_strided, mem[index_strided]);
                             index_strided = index_strided + 1;
                         end
                         index = index + 1;
                     end
                 end else begin
-                    $error("Error: Invalid data format in file %s", {mem_file, $sformatf("%0d", i), ".txt"});
-                    $finish;
+                    $fatal(1, "Invalid vector format: %s", {mem_file, $sformatf("%0d", i), ".txt"});
                 end
             end
             $fclose(file);
         end
     end
+    end // hardware-vector initialization
 end
 
 
@@ -397,6 +426,7 @@ always @* begin
     read_id_next = read_id_reg;
     read_addr_next = read_addr_reg;
     read_count_next = read_count_reg;
+    read_latency_count_next = read_latency_count_reg;
     read_size_next = read_size_reg;
     read_burst_next = read_burst_reg;
 
@@ -414,9 +444,32 @@ always @* begin
                 read_burst_next = s_axi_arburst;
 
                 s_axi_arready_next = 1'b0;
-                read_state_next = READ_STATE_BURST;
+                read_latency_count_next = READ_LATENCY > 1 ? READ_LATENCY - 1 : 0;
+                read_state_next = READ_LATENCY > 1 ? READ_STATE_WAIT : READ_STATE_BURST;
+                if (SRAM_READ_ON_ADDRESS) begin
+                    mem_rd_en = 1'b1;
+                    s_axi_rvalid_next = 1'b1;
+                    s_axi_rid_next = s_axi_arid;
+                    s_axi_rlast_next = s_axi_arlen == 0;
+                    read_count_next = s_axi_arlen - 1;
+                    if (s_axi_arburst != 2'b00)
+                        read_addr_next = s_axi_araddr + (1 << read_size_next);
+                    if (s_axi_arlen == 0) begin
+                        read_state_next = READ_STATE_IDLE;
+                        s_axi_arready_next = 1'b1;
+                    end
+                end
             end else begin
                 read_state_next = READ_STATE_IDLE;
+            end
+        end
+        READ_STATE_WAIT: begin
+            if (read_latency_count_reg > 1) begin
+                read_latency_count_next = read_latency_count_reg - 1;
+                read_state_next = READ_STATE_WAIT;
+            end else begin
+                read_latency_count_next = 0;
+                read_state_next = READ_STATE_BURST;
             end
         end
         READ_STATE_BURST: begin
@@ -448,6 +501,7 @@ always @(posedge clk) begin
     read_id_reg <= read_id_next;
     read_addr_reg <= read_addr_next;
     read_count_reg <= read_count_next;
+    read_latency_count_reg <= read_latency_count_next;
     read_size_reg <= read_size_next;
     read_burst_reg <= read_burst_next;
 
@@ -457,7 +511,8 @@ always @(posedge clk) begin
     s_axi_rvalid_reg <= s_axi_rvalid_next;
 
     if (mem_rd_en) begin
-        s_axi_rdata_reg <= mem[read_addr_valid];
+        s_axi_rdata_reg <= mem[SRAM_READ_ON_ADDRESS && read_state_reg == READ_STATE_IDLE ?
+                                  s_axi_araddr_valid : read_addr_valid];
     end
 
     if (!s_axi_rvalid_pipe_reg || s_axi_rready) begin

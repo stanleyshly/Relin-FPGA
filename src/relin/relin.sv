@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 `include "relin_if.svh"
 
 module relin
@@ -84,6 +85,7 @@ wire i_p1_valid_d1, i_p2_valid_d1;
 wire [LOGQ-1:0] i_p2_data_d8 [TP-1:0];
 // ntt control path
 wire intt;
+wire [LOGL-1:0] ctr;
 wire ntt_i_valid, intt_i_valid, psi_i_valid, psi_inv_i_valid, feed_psi, psi_r_done;
 wire ntt_o_valid, intt_o_valid;
 // ntt data path
@@ -246,6 +248,7 @@ relin_ntt_mux #(
     .clk           (clk           ),
     .rst           (rst           ),
     .load_q        (load_q_ntt    ),
+    .feed_psi      (1'b0         ),
     .psi_valid     (psi_i_valid   ),
     .psi_inv_valid     (psi_inv_i_valid   ),
     .qH            (qH_ntt        ),
@@ -466,6 +469,7 @@ shift_reg_arr #(
     .RST_EN (0             )
 ) ntt_o_poly_shift_reg_d4_1 (
     .clk    (clk         ),
+    .rst (rst),
     .i_data (ntt_o_poly  ),
     .o_data (ntt_o_poly_d_0)
 );
@@ -477,6 +481,7 @@ shift_reg_arr #(
     .RST_EN (0             )
 ) ntt_o_poly_shift_reg_d4_2 (
     .clk    (clk         ),
+    .rst (rst),
     .i_data (ntt_o_poly  ),
     .o_data (ntt_o_poly_d_1)
 );
@@ -488,6 +493,7 @@ shift_reg_arr #(
     .RST_EN (0             )
 ) had_0_poly_data_b_delay (
     .clk    (clk         ),
+    .rst (rst),
     .i_data (i_p1_data   ),
     .o_data (i_p1_data_d )
 );
@@ -499,6 +505,7 @@ shift_reg_arr #(
     .RST_EN (0             )
 ) had_1_poly_data_b_delay (
     .clk    (clk         ),
+    .rst (rst),
     .i_data (i_p2_data   ),
     .o_data (i_p2_data_d )
 );
@@ -809,7 +816,7 @@ typedef enum reg[10:0] {
 (* fsm_encoding = "none" *) t_state state;
 t_state next_state;
 
-wire [LOGL-1:0] ctr;
+
 reg  ctr_inc;
 reg  ctr_rst;
 wire acc_o_valid_d;

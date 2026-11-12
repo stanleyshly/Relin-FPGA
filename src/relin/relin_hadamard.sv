@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 /*
 
     Computes T[i] = A[i] * B[i] mod q for i = 0 to TP-1
@@ -36,7 +37,7 @@ module relin_hadamard
 
 localparam W = LOGQ - LOGQH;
 
-localparam modmul_wlm_params_t params = {LOGQ, LOGQH, 1, FF_IN, FF_MUL, FF_SUM, FF_SUB, FF_OUT, USE_CSA, FF_CSA, MORE_DSP, NON_STD};
+localparam modmul_wlm_params_t params = '{LOGQ, LOGQH, 1, FF_IN, FF_MUL, FF_SUM, FF_SUB, FF_OUT, USE_CSA, FF_CSA, MORE_DSP, NON_STD};
 localparam LAT = modmul_wlm_lat(params);
 
 reg [LOGQH -1:0] qH_int;

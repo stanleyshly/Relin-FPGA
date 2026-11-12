@@ -3,14 +3,22 @@
 `define HUGE_WAIT   300
 `define LONG_WAIT   100
 `define RESET_TIME   25
-`define CLK_PERIOD    5
-`define CLK_HALF    2.5
+`define CLK_PERIOD    4
+`define CLK_HALF      2
 
 module kernel_tb();
+realtime timing_start_ns;
+integer config_writes = 0;
+
+initial begin
+  #10000000;
+  $fatal(1, "RTL simulation timeout: kernel did not complete within 10 ms");
+end
+// Functional fixture: N=4096, TP=64, L=2; modulus tables supply Q primes and p.
 parameter LOGN  = 12;
-parameter LOGQ  = 60;
-parameter LOGQH = 17;
-parameter LOGTP = 5 ;
+parameter LOGQ  = 32;
+parameter LOGQH = 15;
+parameter LOGTP = 6 ;
 parameter EN_ADD= 1 ;
 parameter L     = 2 ;
 
@@ -19,72 +27,72 @@ parameter MEM_FILE_WIDTH_USR = (LOGTP == 5) ? 64 : LOGTP == 6 ? 32 : 0;
 // parameters for kernel
 parameter integer C_S_AXI_CONTROL_ADDR_WIDTH = 12;
 parameter integer C_S_AXI_CONTROL_DATA_WIDTH = 32;
-parameter integer HBM_ADDR_WIDTH             = 32; // for simulation purposes
+parameter integer HBM_ADDR_WIDTH             = 64; // device/CSR width; axi_ram caps storage separately
 parameter integer HBM_DATA_WIDTH             = 256;
-localparam integer C_M00_AXI_ADDR_WIDTH = uut.C_M00_AXI_ADDR_WIDTH;
-localparam integer C_M00_AXI_DATA_WIDTH = uut.C_M00_AXI_DATA_WIDTH;
-localparam integer C_M01_AXI_ADDR_WIDTH = uut.C_M01_AXI_ADDR_WIDTH;
-localparam integer C_M01_AXI_DATA_WIDTH = uut.C_M01_AXI_DATA_WIDTH;
-localparam integer C_M02_AXI_ADDR_WIDTH = uut.C_M02_AXI_ADDR_WIDTH;
-localparam integer C_M02_AXI_DATA_WIDTH = uut.C_M02_AXI_DATA_WIDTH;
-localparam integer C_M03_AXI_ADDR_WIDTH = uut.C_M03_AXI_ADDR_WIDTH;
-localparam integer C_M03_AXI_DATA_WIDTH = uut.C_M03_AXI_DATA_WIDTH;
-localparam integer C_M04_AXI_ADDR_WIDTH = uut.C_M04_AXI_ADDR_WIDTH;
-localparam integer C_M04_AXI_DATA_WIDTH = uut.C_M04_AXI_DATA_WIDTH;
-localparam integer C_M05_AXI_ADDR_WIDTH = uut.C_M05_AXI_ADDR_WIDTH;
-localparam integer C_M05_AXI_DATA_WIDTH = uut.C_M05_AXI_DATA_WIDTH;
-localparam integer C_M06_AXI_ADDR_WIDTH = uut.C_M06_AXI_ADDR_WIDTH;
-localparam integer C_M06_AXI_DATA_WIDTH = uut.C_M06_AXI_DATA_WIDTH;
-localparam integer C_M07_AXI_ADDR_WIDTH = uut.C_M07_AXI_ADDR_WIDTH;
-localparam integer C_M07_AXI_DATA_WIDTH = uut.C_M07_AXI_DATA_WIDTH;
-localparam integer C_M08_AXI_ADDR_WIDTH = uut.C_M08_AXI_ADDR_WIDTH;
-localparam integer C_M08_AXI_DATA_WIDTH = uut.C_M08_AXI_DATA_WIDTH;
-localparam integer C_M09_AXI_ADDR_WIDTH = uut.C_M09_AXI_ADDR_WIDTH;
-localparam integer C_M09_AXI_DATA_WIDTH = uut.C_M09_AXI_DATA_WIDTH;
-localparam integer C_M10_AXI_ADDR_WIDTH = uut.C_M10_AXI_ADDR_WIDTH;
-localparam integer C_M10_AXI_DATA_WIDTH = uut.C_M10_AXI_DATA_WIDTH;
-localparam integer C_M11_AXI_ADDR_WIDTH = uut.C_M11_AXI_ADDR_WIDTH;
-localparam integer C_M11_AXI_DATA_WIDTH = uut.C_M11_AXI_DATA_WIDTH;
-localparam integer C_M12_AXI_ADDR_WIDTH = uut.C_M12_AXI_ADDR_WIDTH;
-localparam integer C_M12_AXI_DATA_WIDTH = uut.C_M12_AXI_DATA_WIDTH;
-localparam integer C_M13_AXI_ADDR_WIDTH = uut.C_M13_AXI_ADDR_WIDTH;
-localparam integer C_M13_AXI_DATA_WIDTH = uut.C_M13_AXI_DATA_WIDTH;
-localparam integer C_M14_AXI_ADDR_WIDTH = uut.C_M14_AXI_ADDR_WIDTH;
-localparam integer C_M14_AXI_DATA_WIDTH = uut.C_M14_AXI_DATA_WIDTH;
-localparam integer C_M15_AXI_ADDR_WIDTH = uut.C_M15_AXI_ADDR_WIDTH;
-localparam integer C_M15_AXI_DATA_WIDTH = uut.C_M15_AXI_DATA_WIDTH;
-localparam integer C_M16_AXI_ADDR_WIDTH = uut.C_M16_AXI_ADDR_WIDTH;
-localparam integer C_M16_AXI_DATA_WIDTH = uut.C_M16_AXI_DATA_WIDTH;
-localparam integer C_M17_AXI_ADDR_WIDTH = uut.C_M17_AXI_ADDR_WIDTH;
-localparam integer C_M17_AXI_DATA_WIDTH = uut.C_M17_AXI_DATA_WIDTH;
-localparam integer C_M18_AXI_ADDR_WIDTH = uut.C_M18_AXI_ADDR_WIDTH;
-localparam integer C_M18_AXI_DATA_WIDTH = uut.C_M18_AXI_DATA_WIDTH;
-localparam integer C_M19_AXI_ADDR_WIDTH = uut.C_M19_AXI_ADDR_WIDTH;
-localparam integer C_M19_AXI_DATA_WIDTH = uut.C_M19_AXI_DATA_WIDTH;
-localparam integer C_M20_AXI_ADDR_WIDTH = uut.C_M20_AXI_ADDR_WIDTH;
-localparam integer C_M20_AXI_DATA_WIDTH = uut.C_M20_AXI_DATA_WIDTH;
-localparam integer C_M21_AXI_ADDR_WIDTH = uut.C_M21_AXI_ADDR_WIDTH;
-localparam integer C_M21_AXI_DATA_WIDTH = uut.C_M21_AXI_DATA_WIDTH;
-localparam integer C_M22_AXI_ADDR_WIDTH = uut.C_M22_AXI_ADDR_WIDTH;
-localparam integer C_M22_AXI_DATA_WIDTH = uut.C_M22_AXI_DATA_WIDTH;
-localparam integer C_M23_AXI_ADDR_WIDTH = uut.C_M23_AXI_ADDR_WIDTH;
-localparam integer C_M23_AXI_DATA_WIDTH = uut.C_M23_AXI_DATA_WIDTH;
-localparam integer C_M24_AXI_ADDR_WIDTH = uut.C_M24_AXI_ADDR_WIDTH;
-localparam integer C_M24_AXI_DATA_WIDTH = uut.C_M24_AXI_DATA_WIDTH;
-localparam integer C_M25_AXI_ADDR_WIDTH = uut.C_M25_AXI_ADDR_WIDTH;
-localparam integer C_M25_AXI_DATA_WIDTH = uut.C_M25_AXI_DATA_WIDTH;
-localparam integer C_M26_AXI_ADDR_WIDTH = uut.C_M26_AXI_ADDR_WIDTH;
-localparam integer C_M26_AXI_DATA_WIDTH = uut.C_M26_AXI_DATA_WIDTH;
-localparam integer C_M27_AXI_ADDR_WIDTH = uut.C_M27_AXI_ADDR_WIDTH;
-localparam integer C_M27_AXI_DATA_WIDTH = uut.C_M27_AXI_DATA_WIDTH;
-localparam integer C_M28_AXI_ADDR_WIDTH = uut.C_M28_AXI_ADDR_WIDTH;
-localparam integer C_M28_AXI_DATA_WIDTH = uut.C_M28_AXI_DATA_WIDTH;
-localparam integer C_M29_AXI_ADDR_WIDTH = uut.C_M29_AXI_ADDR_WIDTH;
-localparam integer C_M29_AXI_DATA_WIDTH = uut.C_M29_AXI_DATA_WIDTH;
-localparam integer C_M30_AXI_ADDR_WIDTH = uut.C_M30_AXI_ADDR_WIDTH;
-localparam integer C_M30_AXI_DATA_WIDTH = uut.C_M30_AXI_DATA_WIDTH;
-localparam integer C_M31_AXI_ADDR_WIDTH = uut.C_M31_AXI_ADDR_WIDTH;
-localparam integer C_M31_AXI_DATA_WIDTH = uut.C_M31_AXI_DATA_WIDTH;
+localparam integer C_M00_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M00_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M01_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M01_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M02_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M02_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M03_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M03_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M04_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M04_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M05_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M05_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M06_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M06_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M07_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M07_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M08_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M08_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M09_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M09_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M10_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M10_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M11_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M11_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M12_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M12_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M13_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M13_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M14_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M14_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M15_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M15_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M16_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M16_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M17_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M17_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M18_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M18_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M19_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M19_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M20_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M20_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M21_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M21_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M22_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M22_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M23_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M23_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M24_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M24_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M25_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M25_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M26_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M26_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M27_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M27_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M28_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M28_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M29_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M29_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M30_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M30_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
+localparam integer C_M31_AXI_ADDR_WIDTH = HBM_ADDR_WIDTH;
+localparam integer C_M31_AXI_DATA_WIDTH = HBM_DATA_WIDTH;
 
 
 
@@ -1719,6 +1727,7 @@ axi_hbm #(
     .HBM_ADDR_WIDTH             (HBM_ADDR_WIDTH),
     .HBM_DATA_WIDTH             (HBM_DATA_WIDTH),
     .L                          (L),
+    .LOGN                       (LOGN),
     .MEM_FILE_WIDTH_USR         (MEM_FILE_WIDTH_USR)
 ) hbm_inst (
     .clk                   (clk           ),
@@ -2531,82 +2540,6 @@ initial begin
     aresetn = 1;
 end
 
-task perform_read;
-  input [11:0] reg_address;
-  output [31:0] reg_data;
-  begin
-    // Channel AR
-    axils_araddr  <= reg_address;
-    axils_arvalid <= 1'b1;
-    wait (axils_arready);
-    #`CLK_PERIOD;
-    axils_arvalid <= 1'b0;
-    // Channel R
-    axils_rready  <= 1'b1;
-    wait (axils_rvalid);
-    reg_data <= axils_rdata;
-    #`CLK_PERIOD;
-    axils_rready  <= 1'b0;
-    #`CLK_PERIOD;
-    #`RESET_TIME;
-  end
-endtask
-
-task perform_write;
-  input [11:0] reg_address;
-  input [31:0] reg_data;
-  begin
-    // Channel AW
-    axils_awaddr <= reg_address;
-    axils_awvalid <= 1'b1;
-    // Channel W
-    axils_wdata  <= reg_data;
-    axils_wstrb  <= 4'b1111;
-    axils_wvalid <= 1'b1;
-    // Channel AW
-    wait (axils_awready);
-    #`CLK_PERIOD;
-    axils_awvalid <= 1'b0;
-    // Channel W
-    wait (axils_wready);
-    #`CLK_PERIOD;
-    axils_wvalid <= 1'b0;
-    // Channel B
-    axils_bready <= 1'b1;
-    wait (axils_bvalid);
-    #`CLK_PERIOD;
-    axils_bready <= 1'b0;
-    #`CLK_PERIOD;
-    #`RESET_TIME;
-  end
-endtask
-
-task wait_CmdDone;
-  begin
-    #`CLK_PERIOD;
-    perform_read(ADDR_AP_STATUS, status);
-    while (status[0]==1'b0)
-    begin
-      #`LONG_WAIT;
-      perform_read(ADDR_AP_STATUS, status);
-    end
-    #`CLK_PERIOD;
-  end
-endtask
-
-task wait_ApDone;
-  begin
-    #`CLK_PERIOD;
-    perform_read(ADDR_AP_CTRL, status);
-    while (status[1]==1'b0)
-    begin
-      #`LONG_WAIT;
-      perform_read(ADDR_AP_CTRL, status);
-    end
-    #`CLK_PERIOD;
-  end
-endtask
-
 localparam
   ADDR_AP_CTRL         = 9'h000,
   ADDR_GIE             = 9'h004,
@@ -2683,6 +2616,94 @@ localparam
   ADDR_HBM_ADDR31_0    = 9'h120,
   ADDR_HBM_ADDR31_1    = 9'h124;
 
+initial begin
+  forever begin
+    #10000;
+    $display("RTL_PROGRESS: time_ns=%0.0f configured_writes=%0d done=%b status=%h", $realtime, config_writes, done, status);
+  end
+end
+
+task perform_read;
+  input [11:0] reg_address;
+  output [31:0] reg_data;
+  begin
+    // Channel AR
+    axils_araddr  <= reg_address;
+    axils_arvalid <= 1'b1;
+    wait (axils_arready);
+    #`CLK_PERIOD;
+    axils_arvalid <= 1'b0;
+    // Channel R
+    axils_rready  <= 1'b1;
+    wait (axils_rvalid);
+    reg_data <= axils_rdata;
+    #`CLK_PERIOD;
+    axils_rready  <= 1'b0;
+    #`CLK_PERIOD;
+    #`RESET_TIME;
+    config_writes = config_writes + 1;
+    if ((config_writes % 16) == 0)
+      $display("AXIL_PROGRESS: completed_writes=%0d time_ns=%0.0f", config_writes, $realtime);
+  end
+endtask
+
+task perform_write;
+  input [11:0] reg_address;
+  input [31:0] reg_data;
+  begin
+    // Channel AW
+    axils_awaddr <= reg_address;
+    axils_awvalid <= 1'b1;
+    // Channel W
+    axils_wdata  <= reg_data;
+    axils_wstrb  <= 4'b1111;
+    axils_wvalid <= 1'b1;
+    // Channel AW
+    wait (axils_awready);
+    #`CLK_PERIOD;
+    axils_awvalid <= 1'b0;
+    // Channel W
+    wait (axils_wready);
+    #`CLK_PERIOD;
+    axils_wvalid <= 1'b0;
+    // Channel B
+    axils_bready <= 1'b1;
+    wait (axils_bvalid);
+    #`CLK_PERIOD;
+    axils_bready <= 1'b0;
+    #`CLK_PERIOD;
+    #`RESET_TIME;
+  end
+endtask
+
+task wait_CmdDone;
+  begin
+    #`CLK_PERIOD;
+    perform_read(ADDR_AP_STATUS, status);
+    while (status[0]==1'b0)
+    begin
+      #`LONG_WAIT;
+      perform_read(ADDR_AP_STATUS, status);
+    end
+    #`CLK_PERIOD;
+  end
+endtask
+
+task wait_ApDone;
+  begin
+    #`CLK_PERIOD;
+    perform_read(ADDR_AP_CTRL, status);
+    while (status[1]==1'b0)
+    begin
+      #`LONG_WAIT;
+      perform_read(ADDR_AP_CTRL, status);
+    end
+    #`CLK_PERIOD;
+  end
+endtask
+
+
+
 localparam
   CMD_EXIT = 32'hFFFFFFFF;
 
@@ -2758,6 +2779,8 @@ initial begin
 
   ////////////////////////////////////////////////////////////////////////////
 
+  timing_start_ns = $realtime;
+  $display("KERNEL_START: time_ns=%0.0f", $realtime);
   perform_write(ADDR_AP_CTRL     , 32'h00000001);
   // perform_write(ADDR_AP_CONTROL  , 32'h00000000);
 
@@ -2765,6 +2788,9 @@ initial begin
 
   wait_ApDone();
   // #`HUGE_WAIT
+  if ($test$plusargs("RELIN_TIMING_ONLY"))
+    $display("TIMING_ONLY_RESULT: relinearization control-start-to-polled-done latency_ns=%0.3f cycles=%0.0f; synthetic zero data; arithmetic unverified; not standalone NTT latency or steady-state throughput",
+             $realtime - timing_start_ns, ($realtime - timing_start_ns) / `CLK_PERIOD);
   done = 1'b1;
   ////////////////////////////////////////////////////////////////////////////
 

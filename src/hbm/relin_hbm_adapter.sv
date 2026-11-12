@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 `include "relin_if.svh"
 `include "relin_mem.svh"
 `include "axi.sv"
@@ -10,7 +11,10 @@ module relin_hbm_adapter
         parameter LOGQ           = 64,
         parameter PSI_CC        = (1 << (LOGN - LOGTP)),
         parameter HBM_ADDR_WIDTH = 64,
-        parameter HBM_DATA_WIDTH = 256
+        parameter HBM_DATA_WIDTH = 256,
+        localparam HBM_PCI_COUNT = 24,
+        localparam HBM_PCO_COUNT = 8,
+        localparam HBM_PC_COUNT = HBM_PCI_COUNT + HBM_PCO_COUNT
 
     )
     (
@@ -21,16 +25,23 @@ module relin_hbm_adapter
         relin_t.slave      relin_t ,
         axi4_t.master      m_axi [0:HBM_PC_COUNT-1]
     );
+reg i_p0_done_int;
+reg i_p1_done_int;
+reg i_p2_done_int;
+reg o_p3_done_int;
 
 /////////////////////////////// parameters //////////////////////////////
 
 localparam PSI_NUM = PSI_CC << LOGTP;
 localparam TP = 1 << LOGTP;
 
-localparam HBM_PCI_COUNT  = 24;
-localparam HBM_PCO_COUNT  = 8;
-localparam HBM_PC_COUNT   = HBM_PCI_COUNT + HBM_PCO_COUNT;
-localparam HBM_BURST_LEN  = 128;
+
+
+
+// A burst must fit both a polynomial and a twiddle stream on each port.
+localparam RAW_POLY_BEATS = (((1 << LOGN) * ((LOGQ <= 32) ? 32 : 64)) / 64) * 8 / HBM_DATA_WIDTH;
+localparam MIN_STREAM_BEATS = RAW_POLY_BEATS < PSI_CC ? RAW_POLY_BEATS : PSI_CC;
+localparam HBM_BURST_LEN = MIN_STREAM_BEATS < 128 ? MIN_STREAM_BEATS : 128;
 localparam LOG_HBM_BURST_NUM  = $clog2(HBM_BURST_LEN);
 localparam LOG_HBM_BURST_SIZE = $clog2(HBM_BURST_LEN * (HBM_DATA_WIDTH >> 3));
 localparam HBM_LAT        = 20;
@@ -66,7 +77,15 @@ localparam POLY_1_ADDR_OFFSET = POLY_0_ADDR_OFFSET + POLY_1_PC_SIZE;
 localparam POLY_1_ADDR_OFFSET_W = POLY_1_ADDR_OFFSET - POLY_0_ADDR_OFFSET;
 
 localparam LOGCTRD = (PSI_CC > POLY_CC) ? $clog2(PSI_CC) : $clog2(POLY_CC);
-localparam LOGCTRA = (PSI_CC > POLY_CC) ? LOG_PSI_BURST_NUM : LOG_POLY_BURST_NUM;
+localparam LOGCTRA_RAW = (PSI_CC > POLY_CC) ? LOG_PSI_BURST_NUM : LOG_POLY_BURST_NUM;
+localparam LOGCTRA = LOGCTRA_RAW < 1 ? 1 : LOGCTRA_RAW;
+`ifndef SYNTHESIS
+initial begin
+    if (HBM_BURST_LEN < 1 || (POLY_CC % HBM_BURST_LEN) != 0 || (PSI_CC % HBM_BURST_LEN) != 0)
+        $fatal(1, "HBM burst length must divide polynomial and twiddle streams");
+    $display("HBM_CONFIG: burst_beats=%0d poly_beats=%0d poly_bursts=%0d psi_bursts=%0d", HBM_BURST_LEN, POLY_CC, POLY_BURST_NUM, PSI_BURST_NUM);
+end
+`endif
 
 localparam FIFO_READ_LAT_PSI  = (PSI_BURST_NUM  - 1) * HBM_LAT; // number of cycles to read from the fifo
 localparam FIFO_READ_LAT_POLY = (POLY_BURST_NUM - 1) * HBM_LAT; // number of cycles to read from the fifo
@@ -486,7 +505,7 @@ always @(*) begin
     endcase
 end
 
-reg i_p0_done_int;
+
 wire i_p0_done_d10;
 
 always @(*) begin
@@ -734,7 +753,7 @@ always @(*) begin
     endcase
 end
 
-reg i_p1_done_int;
+
 wire i_p1_done_d10;
 
 always @(*) begin
@@ -972,7 +991,7 @@ always @(*) begin
 end
 
 
-reg i_p2_done_int;
+
 wire i_p2_done_d10;
 
 always @(*) begin
@@ -1125,7 +1144,7 @@ always @(*) begin
     endcase
 end
 
-reg o_p3_done_int;
+
 wire o_p3_done_d10;
 
 always @(*) begin

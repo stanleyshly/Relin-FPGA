@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module relin_accum_wrapper 
    #(
         parameter L         = 30,
@@ -7,7 +8,8 @@ module relin_accum_wrapper
         parameter FF_ADD    = 0 ,
         parameter LOGTP     = 5 ,
         parameter READ_DELAY  = 10, // between two reads
-        parameter START_DELAY = 2   // for start_read and write_done
+        parameter START_DELAY = 2, // for start_read and write_done
+        localparam TP = (1 << LOGTP)
 
     )
     (
@@ -26,7 +28,7 @@ module relin_accum_wrapper
 
 
 
-localparam TP = (1 << LOGTP);
+
 localparam LOGL = $rtoi($ceil($clog2(L + 1)));
 
 
@@ -295,6 +297,7 @@ shift_reg_arr #(
     .RST_EN (0   )    
 ) o_poly_shift_reg_0 (
     .clk    (clk       ),
+    .rst (rst),
     .i_data (o_poly_0  ),
     .o_data (o_poly_0_d)
 );
@@ -307,6 +310,7 @@ shift_reg_arr #(
     .RST_EN (0   )    
 ) o_poly_shift_reg_1 (
     .clk    (clk       ),
+    .rst (rst),
     .i_data (o_poly_1  ),
     .o_data (o_poly_1_d)
 );

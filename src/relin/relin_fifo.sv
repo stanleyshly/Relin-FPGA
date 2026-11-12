@@ -1,9 +1,12 @@
+`timescale 1ns / 1ps
 module relin_fifo
    #(   
         parameter K     = 1 ,
         parameter M     = 1 ,
         parameter TP    = 32,
-        parameter LOGQ  = 64
+        parameter LOGQ  = 64,
+        localparam LOGK = $rtoi($ceil($clog2(K))),
+        localparam LOGM = $rtoi($ceil($clog2(M)))
     )
     (
         input                       clk            ,
@@ -17,8 +20,8 @@ module relin_fifo
     );
 
 
-localparam LOGK = $rtoi($ceil($clog2(K)));
-localparam LOGM = $rtoi($ceil($clog2(M)));
+
+
 
 wire bram_wen;
 wire bram_ren;

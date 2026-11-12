@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module shift_reg_arr
     #(   
         parameter LAT     = 1,

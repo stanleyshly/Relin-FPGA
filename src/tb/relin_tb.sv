@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module relin_tb
 #(   
     parameter L        = 4   , // Number of primes
